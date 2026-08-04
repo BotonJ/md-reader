@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { Tab } from "../composables/useTabs";
 
@@ -11,9 +11,19 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "activate", id: string): void;
   (e: "close", id: string): void;
+  (e: "revealFile", path: string): void;
 }>();
 
 const { t } = useI18n();
+
+const menuState = ref<{ visible: boolean; x: number; y: number; path: string }>(
+  {
+    visible: false,
+    x: 0,
+    y: 0,
+    path: "",
+  }
+);
 
 const items = computed(() =>
   props.tabs.map((tab) => ({
@@ -34,10 +44,28 @@ function basename(p: string): string {
 function onMiddle(id: string) {
   emit("close", id);
 }
+
+function onContextMenu(e: MouseEvent, path: string) {
+  if (!path) return;
+  e.preventDefault();
+  e.stopPropagation();
+  menuState.value = { visible: true, x: e.clientX, y: e.clientY, path };
+}
+
+function closeMenu() {
+  menuState.value.visible = false;
+}
+
+function onRevealFile() {
+  if (menuState.value.path) {
+    emit("revealFile", menuState.value.path);
+  }
+  closeMenu();
+}
 </script>
 
 <template>
-  <div class="tab-bar">
+  <div class="tab-bar" :class="{ 'menu-open': menuState.visible }">
     <div
       v-for="item in items"
       :key="item.id"
@@ -46,6 +74,7 @@ function onMiddle(id: string) {
       :title="item.path"
       @click="emit('activate', item.id)"
       @mousedown.middle.prevent="onMiddle(item.id)"
+      @contextmenu.prevent="onContextMenu($event, item.path)"
     >
       <span v-if="item.isDirty" class="dot"></span>
       <span class="name">{{ item.name }}</span>
@@ -57,6 +86,23 @@ function onMiddle(id: string) {
         ×
       </button>
     </div>
+
+    <div
+      v-if="menuState.visible"
+      class="context-menu"
+      :style="{ left: menuState.x + 'px', top: menuState.y + 'px' }"
+      @click.stop="closeMenu"
+    >
+      <div class="menu-item" @click="onRevealFile">
+        {{ t("app.openContainingFolder") }}
+      </div>
+    </div>
+    <div
+      v-if="menuState.visible"
+      class="context-menu-overlay"
+      @click="closeMenu"
+      @contextmenu.prevent="closeMenu"
+    ></div>
   </div>
 </template>
 
@@ -70,6 +116,9 @@ function onMiddle(id: string) {
   background: var(--shell-sidebar-bg);
   border-bottom: 1px solid var(--shell-toolbar-border);
   scrollbar-width: thin;
+}
+.tab-bar.menu-open {
+  overflow: visible;
 }
 .tab-item {
   display: flex;
@@ -123,5 +172,32 @@ function onMiddle(id: string) {
 .close:hover {
   opacity: 1;
   background: var(--bg-btn-hover);
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 100;
+  min-width: 180px;
+  padding: 4px 0;
+  background: var(--bg-toolbar);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  font-size: 13px;
+}
+.context-menu .menu-item {
+  padding: 6px 16px;
+  color: var(--fg);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.context-menu .menu-item:hover {
+  background: var(--bg-btn-hover);
+}
+.context-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
 }
 </style>

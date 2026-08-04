@@ -25,6 +25,7 @@ const enUS = {
     specifyEdgePath: "You can choose the Edge path when exporting",
     recentFiles: "Recent Files",
     clearRecent: "Clear List",
+    openContainingFolder: "Open Containing Folder",
   },
   toolbar: {
     new: "New",
@@ -56,6 +57,7 @@ const enUS = {
     title: "Reading Settings",
     fontSize: "Font Size",
     editorFontSize: "Editor Font Size",
+    editorFontFamily: "Editor Font",
     lineHeight: "Line Height",
     maxWidth: "Page Width",
     fontFamily: "Body Font",

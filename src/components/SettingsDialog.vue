@@ -167,9 +167,44 @@ const {
   setMaxWidth,
   setFontFamily,
   setEditorFontSize,
+  setEditorFontFamily,
   setTocPosition,
   reset,
 } = useReadingSettings();
+
+interface SystemFont {
+  name: string;
+  monospaced: boolean;
+}
+
+const systemFonts = ref<string[]>([]);
+
+async function loadSystemFonts() {
+  if (systemFonts.value.length) return;
+  try {
+    const fonts = await invoke<SystemFont[]>(
+      "plugin:system-fonts|get_system_fonts"
+    );
+    const seen = new Set<string>();
+    systemFonts.value = fonts
+      .filter((f) => {
+        if (!f.name || f.name.startsWith(".") || seen.has(f.name)) return false;
+        seen.add(f.name);
+        return true;
+      })
+      .map((f) => f.name)
+      .sort((a, b) => a.localeCompare(b, "zh-CN"));
+  } catch {
+    /* ignore */
+  }
+}
+
+watch(
+  () => props.visible,
+  (v) => {
+    if (v) loadSystemFonts();
+  }
+);
 
 async function registerAssociations() {
   associationBusy.value = true;
@@ -228,6 +263,22 @@ async function registerAssociations() {
       </div>
 
       <div class="row">
+        <label>{{ t("settings.editorFontFamily") }}</label>
+        <select
+          :value="settings.editorFontFamily"
+          @change="
+            (e) => setEditorFontFamily((e.target as HTMLSelectElement).value)
+          "
+        >
+          <option value="mono">{{ t("settings.mono") }}</option>
+          <option disabled>────────</option>
+          <option v-for="name in systemFonts" :key="name" :value="name">
+            {{ name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="row">
         <label>{{ t("settings.lineHeight") }}</label>
         <input
           type="range"
@@ -269,6 +320,10 @@ async function registerAssociations() {
             :value="opt.value"
           >
             {{ opt.label }}
+          </option>
+          <option disabled>────────</option>
+          <option v-for="name in systemFonts" :key="name" :value="name">
+            {{ name }}
           </option>
         </select>
       </div>

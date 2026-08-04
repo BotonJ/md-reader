@@ -7,12 +7,7 @@ import vueParser from "vue-eslint-parser";
 
 export default [
   {
-    ignores: [
-      "node_modules/**",
-      "dist/**",
-      "src-tauri/target/**",
-      "**/*.d.ts",
-    ],
+    ignores: ["node_modules/**", "dist/**", "src-tauri/target/**", "**/*.d.ts"],
   },
   js.configs.recommended,
   ...vue.configs["flat/recommended"],
@@ -77,6 +72,8 @@ export default [
         ClipboardEvent: "readonly",
         File: "readonly",
         WheelEvent: "readonly",
+        MediaQueryListEvent: "readonly",
+        MouseEvent: "readonly",
         Element: "readonly",
         btoa: "readonly",
         Uint8Array: "readonly",

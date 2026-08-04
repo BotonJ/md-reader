@@ -12,6 +12,7 @@
     "opener:default",
     "window-state:default",
     "store:default",
+    "system-fonts:default",
     "fs:allow-read-text-file",
     "fs:allow-read-file",
     "fs:allow-write-text-file",

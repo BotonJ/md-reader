@@ -22,6 +22,7 @@ const zhCN = {
     specifyEdgePath: "将在导出时让你手动指定 Edge 路径",
     recentFiles: "最近文件",
     clearRecent: "清除列表",
+    openContainingFolder: "打开文件所在文件夹",
   },
   toolbar: {
     new: "新建",
@@ -53,6 +54,7 @@ const zhCN = {
     title: "阅读设置",
     fontSize: "字号",
     editorFontSize: "编辑器字号",
+    editorFontFamily: "编辑器字体",
     lineHeight: "行高",
     maxWidth: "页面宽度",
     fontFamily: "正文字体",

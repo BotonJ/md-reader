@@ -5,7 +5,7 @@
 [![Release](https://img.shields.io/github/v/release/Neilooo/md-reader?include_prereleases&color=blue)](https://github.com/Neilooo/md-reader/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/Neilooo/md-reader/total)](https://github.com/Neilooo/md-reader/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20(experimental)-lightgrey)]()
+[![Platform](<https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20(experimental)-lightgrey>)]()
 
 一个轻量、快速、所见即所得的 Markdown 桌面阅读器与编辑器，基于 Tauri 2 + Vue 3 + Rust 构建。
 
@@ -18,12 +18,14 @@
 ## 主要特性
 
 ### 多标签页
+
 - 同时打开多个 Markdown 文件，工具栏下方水平标签栏切换
 - 点击切换、中键关闭，再次打开已打开的文件会聚焦到对应标签而非重复打开
 - 每个标签独立保留内容、未保存草稿、编辑/预览模式、大纲和滚动位置，切换即恢复现场
 - 应用重启后自动恢复上次打开的标签列表与激活项
 
 ### 阅读
+
 - CommonMark + GitHub Flavored Markdown
 - YAML Front Matter 解析与预览：顶部 `---` 元数据渲染为信息卡片，正文和大纲自动剥离元数据
 - 代码语法高亮（highlight.js，30+ 语言）
@@ -33,6 +35,7 @@
 - 亮 / 暗主题切换，记忆主题偏好
 
 ### 编辑
+
 - CodeMirror 源码编辑模式，支持 Markdown 高亮、行号、折叠、括号匹配、查找/替换、跳转行
 - 预览 / 编辑一键切换（`Ctrl+E`），切换时按源码行同步视口位置
 - Markdown 格式化快捷键：`Ctrl+B` 加粗、`Ctrl+I` 斜体、`Ctrl+U` 下划线、`Ctrl+L` 高亮、`` Ctrl+Shift+` `` 行内代码
@@ -40,6 +43,7 @@
 - 手动保存 / 另存为，切换文件、关闭标签、关闭窗口和外部变更时保护未保存修改
 
 ### 导航
+
 - 左侧文件树，递归扫描文件夹
 - 大纲（TOC）滚动同步高亮，支持分级展开折叠（▶/▼ 箭头 + 全部展开/折叠按钮，全部折叠显示到二级标题）
 - 大纲位置可在设置中切换：左侧（侧栏 tab，工具栏大纲按钮隐藏）/ 右侧（独立面板），默认右侧
@@ -48,15 +52,18 @@
 - 图片相对路径自动解析
 
 ### 查找
+
 - `Ctrl+F` 当前文档查找（高亮、上一/下一）
 - `Ctrl+Shift+F` 跨文件全文搜索（Rust 后端高速）
 
 ### 导出
+
 - **PDF**（Edge headless，1-3 秒，所见即所得，无 LaTeX）
 - **HTML**（自包含单文件，图片/CSS 全部内嵌）
 - **DOCX**（pandoc 路线，需安装 pandoc；可设置 Word 模板 `.docx` 通过 `--reference-doc` 控制字体、标题和段落样式）
 
 ### 体验
+
 - 阅读设置：字号、编辑器字号、行高、宽度、字体、大纲位置可调
 - 快捷键自定义：设置 -> 查看快捷键，点击键帽录制新组合，支持全局和编辑器快捷键、冲突检测、逐项/全部重置
 - 文件变更监听，自动刷新
@@ -69,29 +76,29 @@
 
 ## 快捷键
 
-| 键 | 动作 |
-|---|---|
-| `Ctrl+E` | 切换预览 / 编辑模式 |
-| `Ctrl+B` | 加粗（编辑模式） |
-| `Ctrl+I` | 斜体（编辑模式） |
-| `Ctrl+U` | 下划线（编辑模式） |
-| `Ctrl+L` | 高亮（编辑模式） |
-| `` Ctrl+Shift+` `` | 行内代码（编辑模式） |
-| `Ctrl+F` | 当前文档查找；编辑模式下打开编辑器查找 |
-| `Ctrl+H` | 编辑模式下替换 |
-| `Ctrl+G` | 编辑模式下跳转行 |
-| `Ctrl+Shift+F` | 全文搜索 |
-| `Ctrl+N` | 新建 Markdown 文件 |
-| `Ctrl+O` | 打开文件 |
-| `Ctrl+,` | 阅读设置 |
-| `Ctrl+S` | 保存当前文件 |
-| `Ctrl+Shift+S` | 另存为 |
-| `Ctrl+P` | 系统打印 / 另存为 PDF |
-| `Ctrl+=` | 放大字体（编辑模式调编辑器字号，预览模式调阅读字号） |
-| `Ctrl+-` | 缩小字体（同上） |
-| `Ctrl+0` | 重置字体为默认（编辑器 14px，阅读 16px） |
-| `Ctrl+滚轮` | 放大/缩小字体（同 Ctrl+=/-，两模式分流） |
-| `Esc` | 关闭查找 / 设置 / 弹窗 |
+| 键                 | 动作                                                 |
+| ------------------ | ---------------------------------------------------- |
+| `Ctrl+E`           | 切换预览 / 编辑模式                                  |
+| `Ctrl+B`           | 加粗（编辑模式）                                     |
+| `Ctrl+I`           | 斜体（编辑模式）                                     |
+| `Ctrl+U`           | 下划线（编辑模式）                                   |
+| `Ctrl+L`           | 高亮（编辑模式）                                     |
+| `` Ctrl+Shift+` `` | 行内代码（编辑模式）                                 |
+| `Ctrl+F`           | 当前文档查找；编辑模式下打开编辑器查找               |
+| `Ctrl+H`           | 编辑模式下替换                                       |
+| `Ctrl+G`           | 编辑模式下跳转行                                     |
+| `Ctrl+Shift+F`     | 全文搜索                                             |
+| `Ctrl+N`           | 新建 Markdown 文件                                   |
+| `Ctrl+O`           | 打开文件                                             |
+| `Ctrl+,`           | 阅读设置                                             |
+| `Ctrl+S`           | 保存当前文件                                         |
+| `Ctrl+Shift+S`     | 另存为                                               |
+| `Ctrl+P`           | 系统打印 / 另存为 PDF                                |
+| `Ctrl+=`           | 放大字体（编辑模式调编辑器字号，预览模式调阅读字号） |
+| `Ctrl+-`           | 缩小字体（同上）                                     |
+| `Ctrl+0`           | 重置字体为默认（编辑器 14px，阅读 16px）             |
+| `Ctrl+滚轮`        | 放大/缩小字体（同 Ctrl+=/-，两模式分流）             |
+| `Esc`              | 关闭查找 / 设置 / 弹窗                               |
 
 > 以上快捷键均可在「设置 -> 查看快捷键」中自定义（Esc 和滚轮缩放除外）。
 
@@ -107,10 +114,11 @@
 
 从 [Releases 页面](https://github.com/Neilooo/md-reader/releases/latest) 下载：
 
-| 文件 | 说明 |
-|---|---|
-| `MD-Reader-*-windows-x64-setup.msi` | 安装版：双击安装，自动注册 `.md / .markdown / .mdx` 文件关联 |
-| `MD-Reader-*-windows-x64-portable.exe` | 绿色版：解压即用，不写注册表 |
+| 文件                                   | 说明                                                         |
+| -------------------------------------- | ------------------------------------------------------------ |
+| `MD-Reader-*-windows-x64-setup.msi`    | 安装版：双击安装，自动注册 `.md / .markdown / .mdx` 文件关联 |
+| `MD-Reader-*-windows-x64-portable.exe` | 绿色版：解压即用，不写注册表                                 |
+| `MD-Reader-*-windows-x64-portable.zip` | 绿色版压缩包：解压后运行，避免浏览器拦截 exe 下载            |
 
 > Windows 10 / 11 自带 WebView2 Runtime，无需额外安装。旧版 Windows 10 可能需要从 [Microsoft 官网](https://developer.microsoft.com/microsoft-edge/webview2/) 单独安装 WebView2 Runtime。
 
@@ -127,12 +135,12 @@ macOS 和 Linux 构建目前为**实验性**，由 GitHub Actions 在发布 tag 
 
 **核心阅读和编辑功能完全不需要安装任何东西**。可选功能按需安装：
 
-| 功能 | 依赖 | Win10/11 默认 | 安装方法 |
-|---|---|:-:|---|
-| 阅读 / 编辑 / 多标签 / 文件树 / 全文搜索 / 公式 / 图表 / HTML 导出 | 无 | — | 无需安装 |
-| **PDF 导出**（所见即所得） | Microsoft Edge（Chromium）/ Chrome | ✅ 自带 | 通常已自带；如缺失从 [microsoft.com/edge](https://www.microsoft.com/edge) 下载 |
-| **DOCX 导出** | [pandoc](https://pandoc.org/) ≥ 2.x | ❌ | 见下方 |
-| 打印 | 系统打印 | ✅ 自带 | 无需安装 |
+| 功能                                                               | 依赖                                | Win10/11 默认 | 安装方法                                                                       |
+| ------------------------------------------------------------------ | ----------------------------------- | :-----------: | ------------------------------------------------------------------------------ |
+| 阅读 / 编辑 / 多标签 / 文件树 / 全文搜索 / 公式 / 图表 / HTML 导出 | 无                                  |       —       | 无需安装                                                                       |
+| **PDF 导出**（所见即所得）                                         | Microsoft Edge（Chromium）/ Chrome  |    ✅ 自带    | 通常已自带；如缺失从 [microsoft.com/edge](https://www.microsoft.com/edge) 下载 |
+| **DOCX 导出**                                                      | [pandoc](https://pandoc.org/) ≥ 2.x |      ❌       | 见下方                                                                         |
+| 打印                                                               | 系统打印                            |    ✅ 自带    | 无需安装                                                                       |
 
 ### 安装 pandoc（仅 DOCX 导出需要）
 
@@ -148,13 +156,13 @@ winget install --id JohnMacFarlane.Pandoc -e
 
 ### 环境要求
 
-| 工具 | 版本 | 安装 |
-|---|---|---|
-| Node.js | ≥ 18 | https://nodejs.org/ |
-| pnpm | ≥ 8 | `npm install -g pnpm` |
-| Rust | ≥ 1.77 | https://rustup.rs/ |
-| WebView2 Runtime | — | Win10/11 自带 |
-| Visual Studio Build Tools | 2019+ | 含 "Desktop development with C++" 工作负载 |
+| 工具                      | 版本   | 安装                                       |
+| ------------------------- | ------ | ------------------------------------------ |
+| Node.js                   | ≥ 18   | https://nodejs.org/                        |
+| pnpm                      | ≥ 8    | `npm install -g pnpm`                      |
+| Rust                      | ≥ 1.77 | https://rustup.rs/                         |
+| WebView2 Runtime          | —      | Win10/11 自带                              |
+| Visual Studio Build Tools | 2019+  | 含 "Desktop development with C++" 工作负载 |
 
 ### 命令
 

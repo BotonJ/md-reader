@@ -69,7 +69,7 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "MD Reader ${{ github.ref_name }}"
           releaseBody: |
-            Windows: 见下方 .msi（安装版）/ .exe（绿色版）。
+            Windows: 见下方 .msi（安装版）/ .exe 或 .zip（绿色版，浏览器拦截 exe 时使用）。
 
             macOS / Linux 为**实验版**，由 CI 自动构建、未做代码签名：
             - macOS: 首次打开右键 → 打开，或 `xattr -dr com.apple.quarantine "MD Reader.app"`

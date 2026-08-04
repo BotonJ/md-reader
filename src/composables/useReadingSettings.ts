@@ -7,6 +7,7 @@ export interface ReadingSettings {
   maxWidth: number;
   fontFamily: string;
   editorFontSize: number;
+  editorFontFamily: string;
   tocPosition: "left" | "right";
 }
 
@@ -15,12 +16,10 @@ const FONT_KEYS = ["system", "sans", "serif", "mono"] as const;
 const FONT_STACKS: Record<string, string> = {
   system:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif',
-  sans:
-    '"Inter", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif',
+  sans: '"Inter", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif',
   serif:
     '"Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "STSong", Georgia, serif',
-  mono:
-    'ui-monospace, SFMono-Regular, "JetBrains Mono", "Cascadia Code", "Source Code Pro", Consolas, monospace',
+  mono: 'ui-monospace, SFMono-Regular, "JetBrains Mono", "Cascadia Code", "Source Code Pro", Consolas, monospace',
 };
 
 const STORAGE = "md-reader-reading";
@@ -42,6 +41,7 @@ function defaults(): ReadingSettings {
     maxWidth: 900,
     fontFamily: "system",
     editorFontSize: 14,
+    editorFontFamily: "mono",
     tocPosition: "right",
   };
 }
@@ -53,16 +53,37 @@ function save() {
   apply();
 }
 
+function getFontStack(value: string): string {
+  if (FONT_STACKS[value]) return FONT_STACKS[value];
+  if (value) return `"${value}", ${FONT_STACKS.system}`;
+  return FONT_STACKS.system;
+}
+
+function getEditorFontStack(value: string): string {
+  if (value === "mono" || !value) return FONT_STACKS.mono;
+  return `"${value}", ${FONT_STACKS.mono}`;
+}
+
 function apply() {
   const r = document.documentElement;
   r.style.setProperty("--reader-font-size", settings.value.fontSize + "px");
-  r.style.setProperty("--reader-line-height", String(settings.value.lineHeight));
+  r.style.setProperty(
+    "--reader-line-height",
+    String(settings.value.lineHeight)
+  );
   r.style.setProperty("--reader-max-width", settings.value.maxWidth + "px");
   r.style.setProperty(
     "--reader-font-family",
-    FONT_STACKS[settings.value.fontFamily] || FONT_STACKS.system
+    getFontStack(settings.value.fontFamily)
   );
-  r.style.setProperty("--editor-font-size", settings.value.editorFontSize + "px");
+  r.style.setProperty(
+    "--editor-font-size",
+    settings.value.editorFontSize + "px"
+  );
+  r.style.setProperty(
+    "--editor-font-family",
+    getEditorFontStack(settings.value.editorFontFamily)
+  );
 }
 
 function setFontSize(v: number) {
@@ -87,6 +108,11 @@ function setFontFamily(v: string) {
 
 function setEditorFontSize(v: number) {
   settings.value.editorFontSize = Math.max(12, Math.min(24, v));
+  save();
+}
+
+function setEditorFontFamily(v: string) {
+  settings.value.editorFontFamily = v;
   save();
 }
 
@@ -117,6 +143,7 @@ export function useReadingSettings() {
     setMaxWidth,
     setFontFamily,
     setEditorFontSize,
+    setEditorFontFamily,
     setTocPosition,
     reset,
   };

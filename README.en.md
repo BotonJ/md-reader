@@ -5,7 +5,7 @@
 [![Release](https://img.shields.io/github/v/release/Neilooo/md-reader?include_prereleases&color=blue)](https://github.com/Neilooo/md-reader/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/Neilooo/md-reader/total)](https://github.com/Neilooo/md-reader/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20(experimental)-lightgrey)]()
+[![Platform](<https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20(experimental)-lightgrey>)]()
 
 A lightweight, fast, WYSIWYG **Markdown viewer / reader / editor** desktop app. Built with **Tauri 2 + Vue 3 + Rust**.
 
@@ -18,12 +18,14 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 ## Features
 
 ### Multi-tab
+
 - Open multiple Markdown files at once, switch via the horizontal tab bar under the toolbar
 - Click to switch, middle-click to close; reopening an already-open file focuses its tab instead of duplicating
 - Each tab independently keeps its content, unsaved draft, edit/preview mode, outline, and scroll position
 - Restores the last open tabs and active tab on restart
 
 ### Reading
+
 - CommonMark + GitHub Flavored Markdown
 - YAML Front Matter parsing & preview: top `---` metadata renders as an info card, body and outline strip the metadata
 - Syntax highlighting with highlight.js (30+ languages)
@@ -33,6 +35,7 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 - Light / dark theme with persisted preference
 
 ### Editing
+
 - CodeMirror source editing mode with Markdown highlighting, line numbers, folding, bracket matching, find/replace, and go to line
 - One-click preview / edit switch (`Ctrl+E`), with viewport synced by source line on toggle
 - Markdown formatting shortcuts: `Ctrl+B` bold, `Ctrl+I` italic, `Ctrl+U` underline, `Ctrl+L` highlight, `` Ctrl+Shift+` `` inline code
@@ -40,6 +43,7 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 - Manual save / save as with unsaved-change protection for tab switches, tab close, window close, and external file changes
 
 ### Navigation
+
 - File tree for Markdown folders
 - Outline / TOC with scroll sync, hierarchical expand/collapse (▶/▼ arrows + expand all/collapse all buttons; collapse all shows up to level 2)
 - Outline position configurable in settings: left (sidebar tab, toolbar outline button hidden) / right (standalone panel), default right
@@ -48,15 +52,18 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 - Relative image path rewriting
 
 ### Search
+
 - `Ctrl+F` find in current document
 - `Ctrl+Shift+F` full-text search across files (Rust backend)
 
 ### Export
+
 - **PDF**: Edge headless, 1-3 seconds, WYSIWYG, no LaTeX required
 - **HTML**: self-contained single file with images/CSS embedded
 - **DOCX**: powered by pandoc; optionally set a Word template `.docx` via `--reference-doc` to control fonts, headings and paragraph styles
 
 ### Desktop integration
+
 - Reading settings: font size, editor font size, line height, width, font family, outline position
 - Customizable shortcuts: Settings -> View shortcuts, click a key cap to record a new combo; supports global and editor shortcuts, conflict detection, per-item and full reset
 - File watching with auto refresh
@@ -69,29 +76,29 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|---|---|
-| `Ctrl+E` | Toggle preview / edit mode |
-| `Ctrl+B` | Bold (edit mode) |
-| `Ctrl+I` | Italic (edit mode) |
-| `Ctrl+U` | Underline (edit mode) |
-| `Ctrl+L` | Highlight (edit mode) |
-| `` Ctrl+Shift+` `` | Inline code (edit mode) |
-| `Ctrl+F` | Find in current document; editor search in edit mode |
-| `Ctrl+H` | Replace in edit mode |
-| `Ctrl+G` | Go to line in edit mode |
-| `Ctrl+Shift+F` | Full-text search |
-| `Ctrl+N` | New Markdown file |
-| `Ctrl+O` | Open file |
-| `Ctrl+,` | Reading settings |
-| `Ctrl+S` | Save current file |
-| `Ctrl+Shift+S` | Save as |
-| `Ctrl+P` | System print / Save as PDF |
-| `Ctrl+=` | Increase font size (editor font in edit mode, reading font in preview) |
-| `Ctrl+-` | Decrease font size (same as above) |
-| `Ctrl+0` | Reset font size to default (editor 14px, reading 16px) |
-| `Ctrl+Scroll` | Zoom font size (same as Ctrl+=/-, two-mode branching) |
-| `Esc` | Close find/settings/dialogs |
+| Shortcut           | Action                                                                 |
+| ------------------ | ---------------------------------------------------------------------- |
+| `Ctrl+E`           | Toggle preview / edit mode                                             |
+| `Ctrl+B`           | Bold (edit mode)                                                       |
+| `Ctrl+I`           | Italic (edit mode)                                                     |
+| `Ctrl+U`           | Underline (edit mode)                                                  |
+| `Ctrl+L`           | Highlight (edit mode)                                                  |
+| `` Ctrl+Shift+` `` | Inline code (edit mode)                                                |
+| `Ctrl+F`           | Find in current document; editor search in edit mode                   |
+| `Ctrl+H`           | Replace in edit mode                                                   |
+| `Ctrl+G`           | Go to line in edit mode                                                |
+| `Ctrl+Shift+F`     | Full-text search                                                       |
+| `Ctrl+N`           | New Markdown file                                                      |
+| `Ctrl+O`           | Open file                                                              |
+| `Ctrl+,`           | Reading settings                                                       |
+| `Ctrl+S`           | Save current file                                                      |
+| `Ctrl+Shift+S`     | Save as                                                                |
+| `Ctrl+P`           | System print / Save as PDF                                             |
+| `Ctrl+=`           | Increase font size (editor font in edit mode, reading font in preview) |
+| `Ctrl+-`           | Decrease font size (same as above)                                     |
+| `Ctrl+0`           | Reset font size to default (editor 14px, reading 16px)                 |
+| `Ctrl+Scroll`      | Zoom font size (same as Ctrl+=/-, two-mode branching)                  |
+| `Esc`              | Close find/settings/dialogs                                            |
 
 > All shortcuts above can be customized in **Settings -> View shortcuts** (except Esc and scroll zoom).
 
@@ -107,10 +114,11 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 
 Download from the [Releases page](https://github.com/Neilooo/md-reader/releases/latest):
 
-| File | Description |
-|---|---|
-| `MD-Reader-*-windows-x64-setup.msi` | Installer with file association support |
-| `MD-Reader-*-windows-x64-portable.exe` | Portable executable, no registry changes |
+| File                                   | Description                                                         |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| `MD-Reader-*-windows-x64-setup.msi`    | Installer with file association support                             |
+| `MD-Reader-*-windows-x64-portable.exe` | Portable executable, no registry changes                            |
+| `MD-Reader-*-windows-x64-portable.zip` | Portable zip: extract and run, avoids browser exe download blocking |
 
 > Windows 10 / 11 usually includes WebView2 Runtime. Older Windows 10 builds may need the [Microsoft WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/).
 
@@ -127,12 +135,12 @@ macOS and Linux builds are **experimental**, produced via GitHub Actions on rele
 
 Core reading and editing features require **no external tools**. Optional features need the tools below:
 
-| Feature | Dependency | Included on Windows 10/11 | Notes |
-|---|---|:-:|---|
-| Reading / editing / multi-tab / file tree / search / math / diagrams / HTML export | None | — | Works out of the box |
-| **PDF export** | Microsoft Edge (Chromium) / Chrome | ✅ Edge usually included | Used for WYSIWYG PDF export |
-| **DOCX export** | [pandoc](https://pandoc.org/) ≥ 2.x | ❌ | Install only if you need DOCX |
-| Print | System print dialog | ✅ | Optional fallback |
+| Feature                                                                            | Dependency                          | Included on Windows 10/11 | Notes                         |
+| ---------------------------------------------------------------------------------- | ----------------------------------- | :-----------------------: | ----------------------------- |
+| Reading / editing / multi-tab / file tree / search / math / diagrams / HTML export | None                                |             —             | Works out of the box          |
+| **PDF export**                                                                     | Microsoft Edge (Chromium) / Chrome  | ✅ Edge usually included  | Used for WYSIWYG PDF export   |
+| **DOCX export**                                                                    | [pandoc](https://pandoc.org/) ≥ 2.x |            ❌             | Install only if you need DOCX |
+| Print                                                                              | System print dialog                 |            ✅             | Optional fallback             |
 
 ### Install pandoc (DOCX export only)
 
@@ -148,13 +156,13 @@ Or download it from [pandoc.org/installing.html](https://pandoc.org/installing.h
 
 ### Requirements
 
-| Tool | Version | Install |
-|---|---|---|
-| Node.js | ≥ 18 | https://nodejs.org/ |
-| pnpm | ≥ 8 | `npm install -g pnpm` |
-| Rust | ≥ 1.77 | https://rustup.rs/ |
-| WebView2 Runtime | — | Usually included on Windows 10/11 |
-| Visual Studio Build Tools | 2019+ | `Desktop development with C++` workload |
+| Tool                      | Version | Install                                 |
+| ------------------------- | ------- | --------------------------------------- |
+| Node.js                   | ≥ 18    | https://nodejs.org/                     |
+| pnpm                      | ≥ 8     | `npm install -g pnpm`                   |
+| Rust                      | ≥ 1.77  | https://rustup.rs/                      |
+| WebView2 Runtime          | —       | Usually included on Windows 10/11       |
+| Visual Studio Build Tools | 2019+   | `Desktop development with C++` workload |
 
 ### Commands
 

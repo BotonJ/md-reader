@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile, exists } from "@tauri-apps/plugin-fs";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { invoke } from "@tauri-apps/api/core";
 import { useI18n } from "vue-i18n";
@@ -164,6 +165,14 @@ const displayFileName = computed(() =>
 );
 const canExport = computed(() => Boolean(activeTab.value?.draftContent));
 const hasActiveFile = computed(() => Boolean(activeTab.value?.path));
+
+async function openInExplorer(path: string) {
+  try {
+    await revealItemInDir(path);
+  } catch (e: any) {
+    errorMsg.value = e?.message ?? String(e);
+  }
+}
 const dialogFileName = computed(() =>
   dialogTab.value ? basename(dialogTab.value.path) : ""
 );
@@ -1302,6 +1311,7 @@ watch(
       :active-tab-id="activeTabId"
       @activate="switchToTab"
       @close="closeTab"
+      @reveal-file="openInExplorer"
     />
 
     <main class="layout">
@@ -1514,6 +1524,7 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0 8px;
+  cursor: default;
 }
 .btn {
   font-size: 13px;
