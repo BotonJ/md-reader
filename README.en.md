@@ -90,6 +90,11 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 | `Ctrl+Shift+F`     | Full-text search                                                       |
 | `Ctrl+N`           | New Markdown file                                                      |
 | `Ctrl+O`           | Open file                                                              |
+| `Ctrl+W`           | Close current tab                                                       |
+| `Ctrl+Tab`         | Next tab                                                               |
+| `Ctrl+Shift+Tab`   | Previous tab                                                           |
+| `Ctrl+→`           | Next tab (right arrow)                                                 |
+| `Ctrl+←`           | Previous tab (left arrow)                                              |
 | `Ctrl+,`           | Reading settings                                                       |
 | `Ctrl+S`           | Save current file                                                      |
 | `Ctrl+Shift+S`     | Save as                                                                |

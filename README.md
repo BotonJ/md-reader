@@ -90,6 +90,11 @@
 | `Ctrl+Shift+F`     | 全文搜索                                             |
 | `Ctrl+N`           | 新建 Markdown 文件                                   |
 | `Ctrl+O`           | 打开文件                                             |
+| `Ctrl+W`           | 关闭当前标签                                         |
+| `Ctrl+Tab`         | 下一个标签                                           |
+| `Ctrl+Shift+Tab`   | 上一个标签                                           |
+| `Ctrl+→`           | 向右切换标签                                         |
+| `Ctrl+←`           | 向左切换标签                                         |
 | `Ctrl+,`           | 阅读设置                                             |
 | `Ctrl+S`           | 保存当前文件                                         |
 | `Ctrl+Shift+S`     | 另存为                                               |
