@@ -187,6 +187,11 @@ const zhCN = {
     inlineCode: "行内代码",
     close: "关闭查找/设置/弹窗",
     zoomWheel: "滚轮缩放字体",
+    closeTab: "关闭当前标签",
+    nextTab: "下一个标签",
+    prevTab: "上一个标签",
+    nextTabRight: "向右切换标签",
+    prevTabLeft: "向左切换标签",
   },
 };
 

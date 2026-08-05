@@ -191,6 +191,11 @@ const enUS = {
     inlineCode: "Inline code",
     close: "Close find / settings / dialogs",
     zoomWheel: "Scroll to zoom font",
+    closeTab: "Close current tab",
+    nextTab: "Next tab",
+    prevTab: "Previous tab",
+    nextTabRight: "Next tab (right)",
+    prevTabLeft: "Previous tab (left)",
   },
 } satisfies MessageSchema;
 

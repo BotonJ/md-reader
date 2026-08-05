@@ -284,6 +284,18 @@ function switchToTab(id: string) {
   activateTab(id);
 }
 
+function findNextTab(): string {
+  const idx = tabs.value.findIndex((t) => t.id === activeTabId.value);
+  if (idx < 0 || tabs.value.length === 0) return "";
+  return tabs.value[(idx + 1) % tabs.value.length].id;
+}
+
+function findPrevTab(): string {
+  const idx = tabs.value.findIndex((t) => t.id === activeTabId.value);
+  if (idx < 0 || tabs.value.length === 0) return "";
+  return tabs.value[(idx - 1 + tabs.value.length) % tabs.value.length].id;
+}
+
 async function handleRefresh() {
   saveCurrentScroll();
   if (isEditing.value && editorRef.value && activeTab.value) {
@@ -846,6 +858,21 @@ function onKeydown(e: KeyboardEvent) {
   } else if (combo === getBinding("zoom-reset")) {
     e.preventDefault();
     resetFont();
+  } else if (combo === getBinding("close-tab")) {
+    e.preventDefault();
+    if (activeTabId.value) void closeTab(activeTabId.value);
+  } else if (
+    combo === getBinding("next-tab") ||
+    combo === getBinding("next-tab-right")
+  ) {
+    e.preventDefault();
+    if (tabs.value.length > 1) switchToTab(findNextTab());
+  } else if (
+    combo === getBinding("prev-tab") ||
+    combo === getBinding("prev-tab-left")
+  ) {
+    e.preventDefault();
+    if (tabs.value.length > 1) switchToTab(findPrevTab());
   } else if (isEdit && combo === getBinding("find")) {
     e.preventDefault();
     editorRef.value?.openSearch();
