@@ -1705,12 +1705,13 @@ watch(
 .viewer {
   flex: 1 1 auto;
   overflow: auto;
-  background: var(--bg);
+  background: var(--reader-bg, var(--bg));
   min-width: 0;
   position: relative;
 }
 .viewer.editing {
   overflow: hidden;
+  background: var(--bg);
 }
 .empty {
   height: 100%;

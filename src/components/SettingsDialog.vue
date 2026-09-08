@@ -172,8 +172,68 @@ const {
   setEditorFontSize,
   setEditorFontFamily,
   setTocPosition,
+  setReaderBgLight,
+  setReaderBgDark,
+  resetReaderBg,
   reset,
 } = useReadingSettings();
+
+interface ReaderBgPreset {
+  i18nKey: string;
+  value: string | null;
+}
+
+const lightBgPresets: ReaderBgPreset[] = [
+  { i18nKey: "settings.presetDefaultLight", value: null },
+  { i18nKey: "settings.presetPaper", value: "#f5f0e6" },
+  { i18nKey: "settings.presetEyeCare", value: "#eaf4e2" },
+  { i18nKey: "settings.presetLightYellow", value: "#fff8dc" },
+];
+
+const darkBgPresets: ReaderBgPreset[] = [
+  { i18nKey: "settings.presetDefaultDark", value: null },
+  { i18nKey: "settings.presetDarkSlate", value: "#1b222c" },
+  { i18nKey: "settings.presetDarkWarm", value: "#151515" },
+];
+
+const lightBgDisplay = computed(() => settings.value.readerBgLight ?? "#ffffff");
+const darkBgDisplay = computed(() => settings.value.readerBgDark ?? "#0d1117");
+
+function onLightBgInput(e: Event) {
+  setReaderBgLight((e.target as HTMLInputElement).value);
+}
+
+function onDarkBgInput(e: Event) {
+  setReaderBgDark((e.target as HTMLInputElement).value);
+}
+
+function onLightBgHex(e: Event) {
+  const el = e.target as HTMLInputElement;
+  const v = el.value.trim();
+  if (!v) {
+    setReaderBgLight(null);
+    return;
+  }
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+    setReaderBgLight(v);
+  } else {
+    el.value = settings.value.readerBgLight ?? "";
+  }
+}
+
+function onDarkBgHex(e: Event) {
+  const el = e.target as HTMLInputElement;
+  const v = el.value.trim();
+  if (!v) {
+    setReaderBgDark(null);
+    return;
+  }
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+    setReaderBgDark(v);
+  } else {
+    el.value = settings.value.readerBgDark ?? "";
+  }
+}
 
 const {
   settings: pdfStyle,
@@ -277,6 +337,86 @@ async function registerAssociations() {
       </div>
 
       <div v-show="settingsTab === 'reading'">
+        <div class="reader-bg-block">
+          <div class="reader-bg-title">{{ t("settings.readerBg") }}</div>
+
+          <div class="reader-bg-group">
+            <div class="reader-bg-label">
+              {{ t("settings.readerBgLight") }}
+            </div>
+            <div class="reader-bg-controls">
+              <input
+                type="color"
+                :value="lightBgDisplay"
+                @input="onLightBgInput"
+              />
+              <input
+                class="hex-input"
+                type="text"
+                spellcheck="false"
+                :value="settings.readerBgLight ?? ''"
+                placeholder="#RRGGBB"
+                @change="onLightBgHex"
+              />
+              <button class="btn-mini" @click="setReaderBgLight(null)">
+                {{ t("settings.readerBgReset") }}
+              </button>
+            </div>
+            <div class="reader-bg-presets">
+              <button
+                v-for="p in lightBgPresets"
+                :key="p.i18nKey"
+                class="preset-chip"
+                :class="{ active: settings.readerBgLight === p.value }"
+                @click="setReaderBgLight(p.value)"
+              >
+                {{ t(p.i18nKey) }}
+              </button>
+            </div>
+          </div>
+
+          <div class="reader-bg-group">
+            <div class="reader-bg-label">
+              {{ t("settings.readerBgDark") }}
+            </div>
+            <div class="reader-bg-controls">
+              <input
+                type="color"
+                :value="darkBgDisplay"
+                @input="onDarkBgInput"
+              />
+              <input
+                class="hex-input"
+                type="text"
+                spellcheck="false"
+                :value="settings.readerBgDark ?? ''"
+                placeholder="#RRGGBB"
+                @change="onDarkBgHex"
+              />
+              <button class="btn-mini" @click="setReaderBgDark(null)">
+                {{ t("settings.readerBgReset") }}
+              </button>
+            </div>
+            <div class="reader-bg-presets">
+              <button
+                v-for="p in darkBgPresets"
+                :key="p.i18nKey"
+                class="preset-chip"
+                :class="{ active: settings.readerBgDark === p.value }"
+                @click="setReaderBgDark(p.value)"
+              >
+                {{ t(p.i18nKey) }}
+              </button>
+            </div>
+          </div>
+
+          <div class="reader-bg-reset-all">
+            <button class="btn" @click="resetReaderBg">
+              {{ t("settings.readerBgResetAll") }}
+            </button>
+          </div>
+        </div>
+
         <div class="row">
           <label>{{ t("settings.fontSize") }}</label>
           <input
@@ -954,6 +1094,97 @@ select {
   justify-content: flex-end;
   margin-top: 16px;
   padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.reader-bg-block {
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-btn);
+}
+.reader-bg-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 10px;
+}
+.reader-bg-group + .reader-bg-group {
+  margin-top: 12px;
+}
+.reader-bg-label {
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-bottom: 6px;
+}
+.reader-bg-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reader-bg-controls input[type="color"] {
+  width: 34px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-btn);
+  cursor: pointer;
+}
+.hex-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  color: var(--fg);
+  background: var(--bg-btn);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.btn-mini {
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-btn);
+  color: var(--fg-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-mini:hover {
+  background: var(--bg-btn-hover);
+  color: var(--fg);
+}
+.reader-bg-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.preset-chip {
+  font-size: 12px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-btn);
+  color: var(--fg-muted);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.preset-chip:hover {
+  background: var(--bg-btn-hover);
+  color: var(--fg);
+}
+.preset-chip.active {
+  color: var(--link);
+  border-color: var(--link);
+  background: var(--bg-active);
+}
+.reader-bg-reset-all {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 .preview-label {
