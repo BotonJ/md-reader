@@ -632,345 +632,345 @@ async function registerAssociations() {
         <div class="reading-reset">
           <button class="btn" @click="reset">{{ t("settings.reset") }}</button>
         </div>
+      </div>
 
-        <div v-show="settingsTab === 'pdf'" class="section">
-          <div class="section-title">{{ t("pdfStyle.title") }}</div>
-          <div class="association-hint">{{ t("pdfStyle.previewNote") }}</div>
+      <div v-show="settingsTab === 'pdf'" class="section">
+        <div class="section-title">{{ t("pdfStyle.title") }}</div>
+        <div class="association-hint">{{ t("pdfStyle.previewNote") }}</div>
 
-          <div class="preview-label">
-            {{ t("pdfStyle.preview") }}
-            <button
-              type="button"
-              class="compare-toggle"
-              :class="{ active: compareMode }"
-              @click="compareMode = !compareMode"
-            >
-              {{ t("pdfStyle.compare") }}
-            </button>
-          </div>
-          <textarea
-            v-model="sampleText"
-            class="preview-input"
-            :placeholder="t('pdfStyle.sampleText')"
-            rows="3"
-            spellcheck="false"
-          ></textarea>
-          <template v-if="compareMode">
-            <div class="preview-compare">
-              <div class="preview-col">
-                <div class="preview-col-title">{{ t("pdfStyle.light") }}</div>
-                <iframe
-                  class="pdf-preview"
-                  :srcdoc="previewLight"
-                  title="Light preview"
-                ></iframe>
-              </div>
-              <div class="preview-col">
-                <div class="preview-col-title">{{ t("pdfStyle.dark") }}</div>
-                <iframe
-                  class="pdf-preview"
-                  :srcdoc="previewDark"
-                  title="Dark preview"
-                ></iframe>
-              </div>
-            </div>
-          </template>
-          <iframe
-            v-else
-            class="pdf-preview"
-            :srcdoc="previewHtml"
-            title="PDF style preview"
-          ></iframe>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.template") }}</label>
-            <select
-              :value="pdfStyle.templateId"
-              @change="
-                (e) =>
-                  applyPdfTemplate((e.target as HTMLSelectElement).value)
-              "
-            >
-              <optgroup
-                v-for="cat in pdfTemplateCategories"
-                :key="cat.id"
-                :label="t(cat.i18nKey)"
-              >
-                <option
-                  v-for="tid in cat.items"
-                  :key="tid"
-                  :value="tid"
-                >
-                  {{ t(pdfTemplateMap[tid].i18nKey) }}
-                </option>
-              </optgroup>
-              <optgroup
-                v-if="pdfStyle.templateId === 'custom'"
-                :label="t('pdfStyle.custom')"
-              >
-                <option value="custom">{{ t("pdfStyle.custom") }}</option>
-              </optgroup>
-            </select>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.bodyFont") }}</label>
-            <select
-              :value="pdfStyle.bodyFont"
-              @change="
-                (e) =>
-                  setPdfOption('bodyFont', (e.target as HTMLSelectElement).value)
-              "
-            >
-              <option
-                v-for="f in pdfFontChoices"
-                :key="f.value"
-                :value="f.value"
-              >
-                {{ f.label }}
-              </option>
-            </select>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.headingFont") }}</label>
-            <select
-              :value="pdfStyle.headingFont"
-              @change="
-                (e) =>
-                  setPdfOption(
-                    'headingFont',
-                    (e.target as HTMLSelectElement).value
-                  )
-              "
-            >
-              <option
-                v-for="f in pdfFontChoices"
-                :key="f.value"
-                :value="f.value"
-              >
-                {{ f.label }}
-              </option>
-            </select>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.codeFont") }}</label>
-            <select
-              :value="pdfStyle.codeFont"
-              @change="
-                (e) =>
-                  setPdfOption('codeFont', (e.target as HTMLSelectElement).value)
-              "
-            >
-              <option
-                v-for="f in pdfCodeFontChoices"
-                :key="f.value"
-                :value="f.value"
-              >
-                {{ f.label }}
-              </option>
-            </select>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.fontSize") }}</label>
-            <input
-              type="range"
-              :value="pdfStyle.fontSize"
-              min="12"
-              max="24"
-              step="1"
-              @input="
-                (e) =>
-                  setPdfOption('fontSize', Number((e.target as HTMLInputElement).value))
-              "
-            />
-            <span class="value">{{ pdfStyle.fontSize }}px</span>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.lineHeight") }}</label>
-            <input
-              type="range"
-              :value="pdfStyle.lineHeight"
-              min="1.3"
-              max="2.4"
-              step="0.05"
-              @input="
-                (e) =>
-                  setPdfOption(
-                    'lineHeight',
-                    Number((e.target as HTMLInputElement).value)
-                  )
-              "
-            />
-            <span class="value">{{ pdfStyle.lineHeight.toFixed(2) }}</span>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.density") }}</label>
-            <div class="density-group">
-              <button
-                type="button"
-                class="seg"
-                :class="{ active: pdfStyle.density === 'compact' }"
-                @click="setPdfDensity('compact')"
-              >
-                {{ t("pdfStyle.compact") }}
-              </button>
-              <button
-                type="button"
-                class="seg"
-                :class="{ active: pdfStyle.density === 'standard' }"
-                @click="setPdfDensity('standard')"
-              >
-                {{ t("pdfStyle.standard") }}
-              </button>
-              <button
-                type="button"
-                class="seg"
-                :class="{ active: pdfStyle.density === 'loose' }"
-                @click="setPdfDensity('loose')"
-              >
-                {{ t("pdfStyle.loose") }}
-              </button>
-            </div>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.textColor") }}</label>
-            <input
-              type="color"
-              class="color-input"
-              :value="pdfStyle.textColor"
-              @input="
-                (e) =>
-                  setPdfOption('textColor', (e.target as HTMLInputElement).value)
-              "
-            />
-            <span class="value mono">{{ pdfStyle.textColor }}</span>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.headingColor") }}</label>
-            <input
-              type="color"
-              class="color-input"
-              :value="pdfStyle.headingColor"
-              @input="
-                (e) =>
-                  setPdfOption(
-                    'headingColor',
-                    (e.target as HTMLInputElement).value
-                  )
-              "
-            />
-            <span class="value mono">{{ pdfStyle.headingColor }}</span>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.linkColor") }}</label>
-            <input
-              type="color"
-              class="color-input"
-              :value="pdfStyle.linkColor"
-              @input="
-                (e) =>
-                  setPdfOption('linkColor', (e.target as HTMLInputElement).value)
-              "
-            />
-            <span class="value mono">{{ pdfStyle.linkColor }}</span>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.codeBg") }}</label>
-            <input
-              type="color"
-              class="color-input"
-              :value="pdfStyle.codeBg"
-              @input="
-                (e) =>
-                  setPdfOption('codeBg', (e.target as HTMLInputElement).value)
-              "
-            />
-            <span class="value mono">{{ pdfStyle.codeBg }}</span>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.bgColor") }}</label>
-            <input
-              type="color"
-              class="color-input"
-              :value="pdfStyle.bgColor"
-              @input="
-                (e) =>
-                  setPdfOption('bgColor', (e.target as HTMLInputElement).value)
-              "
-            />
-            <span class="value mono">{{ pdfStyle.bgColor }}</span>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.pageSize") }}</label>
-            <select
-              class="sub-select"
-              :value="pdfStyle.pageSize"
-              @change="
-                (e) =>
-                  setPdfOption('pageSize', (e.target as HTMLSelectElement).value as 'A4' | 'Letter')
-              "
-            >
-              <option value="A4">{{ t("pdfStyle.a4") }}</option>
-              <option value="Letter">{{ t("pdfStyle.letter") }}</option>
-            </select>
-            <select
-              class="sub-select"
-              :value="pdfStyle.orientation"
-              @change="
-                (e) =>
-                  setPdfOption(
-                    'orientation',
-                    (e.target as HTMLSelectElement).value as 'portrait' | 'landscape'
-                  )
-              "
-            >
-              <option value="portrait">{{ t("pdfStyle.portrait") }}</option>
-              <option value="landscape">{{ t("pdfStyle.landscape") }}</option>
-            </select>
-          </div>
-
-          <div class="row">
-            <label>{{ t("pdfStyle.pageMargin") }}</label>
-            <input
-              type="range"
-              :value="pdfStyle.pageMargin"
-              min="5"
-              max="40"
-              step="1"
-              @input="
-                (e) =>
-                  setPdfOption(
-                    'pageMargin',
-                    Number((e.target as HTMLInputElement).value)
-                  )
-              "
-            />
-            <span class="value">{{ pdfStyle.pageMargin }}mm</span>
-          </div>
-
-          <div class="section-actions">
-            <button class="btn" @click="resetPdfStyle">
-              {{ t("pdfStyle.reset") }}
-            </button>
-          </div>
-        </div>
-
-        <div class="footer">
-          <button class="btn primary" @click="emit('close')">
-            {{ t("settings.done") }}
+        <div class="preview-label">
+          {{ t("pdfStyle.preview") }}
+          <button
+            type="button"
+            class="compare-toggle"
+            :class="{ active: compareMode }"
+            @click="compareMode = !compareMode"
+          >
+            {{ t("pdfStyle.compare") }}
           </button>
         </div>
+        <textarea
+          v-model="sampleText"
+          class="preview-input"
+          :placeholder="t('pdfStyle.sampleText')"
+          rows="3"
+          spellcheck="false"
+        ></textarea>
+        <template v-if="compareMode">
+          <div class="preview-compare">
+            <div class="preview-col">
+              <div class="preview-col-title">{{ t("pdfStyle.light") }}</div>
+              <iframe
+                class="pdf-preview"
+                :srcdoc="previewLight"
+                title="Light preview"
+              ></iframe>
+            </div>
+            <div class="preview-col">
+              <div class="preview-col-title">{{ t("pdfStyle.dark") }}</div>
+              <iframe
+                class="pdf-preview"
+                :srcdoc="previewDark"
+                title="Dark preview"
+              ></iframe>
+            </div>
+          </div>
+        </template>
+        <iframe
+          v-else
+          class="pdf-preview"
+          :srcdoc="previewHtml"
+          title="PDF style preview"
+        ></iframe>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.template") }}</label>
+          <select
+            :value="pdfStyle.templateId"
+            @change="
+              (e) =>
+                applyPdfTemplate((e.target as HTMLSelectElement).value)
+            "
+          >
+            <optgroup
+              v-for="cat in pdfTemplateCategories"
+              :key="cat.id"
+              :label="t(cat.i18nKey)"
+            >
+              <option
+                v-for="tid in cat.items"
+                :key="tid"
+                :value="tid"
+              >
+                {{ t(pdfTemplateMap[tid].i18nKey) }}
+              </option>
+            </optgroup>
+            <optgroup
+              v-if="pdfStyle.templateId === 'custom'"
+              :label="t('pdfStyle.custom')"
+            >
+              <option value="custom">{{ t("pdfStyle.custom") }}</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.bodyFont") }}</label>
+          <select
+            :value="pdfStyle.bodyFont"
+            @change="
+              (e) =>
+                setPdfOption('bodyFont', (e.target as HTMLSelectElement).value)
+            "
+          >
+            <option
+              v-for="f in pdfFontChoices"
+              :key="f.value"
+              :value="f.value"
+            >
+              {{ f.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.headingFont") }}</label>
+          <select
+            :value="pdfStyle.headingFont"
+            @change="
+              (e) =>
+                setPdfOption(
+                  'headingFont',
+                  (e.target as HTMLSelectElement).value
+                )
+            "
+          >
+            <option
+              v-for="f in pdfFontChoices"
+              :key="f.value"
+              :value="f.value"
+            >
+              {{ f.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.codeFont") }}</label>
+          <select
+            :value="pdfStyle.codeFont"
+            @change="
+              (e) =>
+                setPdfOption('codeFont', (e.target as HTMLSelectElement).value)
+            "
+          >
+            <option
+              v-for="f in pdfCodeFontChoices"
+              :key="f.value"
+              :value="f.value"
+            >
+              {{ f.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.fontSize") }}</label>
+          <input
+            type="range"
+            :value="pdfStyle.fontSize"
+            min="12"
+            max="24"
+            step="1"
+            @input="
+              (e) =>
+                setPdfOption('fontSize', Number((e.target as HTMLInputElement).value))
+            "
+          />
+          <span class="value">{{ pdfStyle.fontSize }}px</span>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.lineHeight") }}</label>
+          <input
+            type="range"
+            :value="pdfStyle.lineHeight"
+            min="1.3"
+            max="2.4"
+            step="0.05"
+            @input="
+              (e) =>
+                setPdfOption(
+                  'lineHeight',
+                  Number((e.target as HTMLInputElement).value)
+                )
+            "
+          />
+          <span class="value">{{ pdfStyle.lineHeight.toFixed(2) }}</span>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.density") }}</label>
+          <div class="density-group">
+            <button
+              type="button"
+              class="seg"
+              :class="{ active: pdfStyle.density === 'compact' }"
+              @click="setPdfDensity('compact')"
+            >
+              {{ t("pdfStyle.compact") }}
+            </button>
+            <button
+              type="button"
+              class="seg"
+              :class="{ active: pdfStyle.density === 'standard' }"
+              @click="setPdfDensity('standard')"
+            >
+              {{ t("pdfStyle.standard") }}
+            </button>
+            <button
+              type="button"
+              class="seg"
+              :class="{ active: pdfStyle.density === 'loose' }"
+              @click="setPdfDensity('loose')"
+            >
+              {{ t("pdfStyle.loose") }}
+            </button>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.textColor") }}</label>
+          <input
+            type="color"
+            class="color-input"
+            :value="pdfStyle.textColor"
+            @input="
+              (e) =>
+                setPdfOption('textColor', (e.target as HTMLInputElement).value)
+            "
+          />
+          <span class="value mono">{{ pdfStyle.textColor }}</span>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.headingColor") }}</label>
+          <input
+            type="color"
+            class="color-input"
+            :value="pdfStyle.headingColor"
+            @input="
+              (e) =>
+                setPdfOption(
+                  'headingColor',
+                  (e.target as HTMLInputElement).value
+                )
+            "
+          />
+          <span class="value mono">{{ pdfStyle.headingColor }}</span>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.linkColor") }}</label>
+          <input
+            type="color"
+            class="color-input"
+            :value="pdfStyle.linkColor"
+            @input="
+              (e) =>
+                setPdfOption('linkColor', (e.target as HTMLInputElement).value)
+            "
+          />
+          <span class="value mono">{{ pdfStyle.linkColor }}</span>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.codeBg") }}</label>
+          <input
+            type="color"
+            class="color-input"
+            :value="pdfStyle.codeBg"
+            @input="
+              (e) =>
+                setPdfOption('codeBg', (e.target as HTMLInputElement).value)
+            "
+          />
+          <span class="value mono">{{ pdfStyle.codeBg }}</span>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.bgColor") }}</label>
+          <input
+            type="color"
+            class="color-input"
+            :value="pdfStyle.bgColor"
+            @input="
+              (e) =>
+                setPdfOption('bgColor', (e.target as HTMLInputElement).value)
+            "
+          />
+          <span class="value mono">{{ pdfStyle.bgColor }}</span>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.pageSize") }}</label>
+          <select
+            class="sub-select"
+            :value="pdfStyle.pageSize"
+            @change="
+              (e) =>
+                setPdfOption('pageSize', (e.target as HTMLSelectElement).value as 'A4' | 'Letter')
+            "
+          >
+            <option value="A4">{{ t("pdfStyle.a4") }}</option>
+            <option value="Letter">{{ t("pdfStyle.letter") }}</option>
+          </select>
+          <select
+            class="sub-select"
+            :value="pdfStyle.orientation"
+            @change="
+              (e) =>
+                setPdfOption(
+                  'orientation',
+                  (e.target as HTMLSelectElement).value as 'portrait' | 'landscape'
+                )
+            "
+          >
+            <option value="portrait">{{ t("pdfStyle.portrait") }}</option>
+            <option value="landscape">{{ t("pdfStyle.landscape") }}</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>{{ t("pdfStyle.pageMargin") }}</label>
+          <input
+            type="range"
+            :value="pdfStyle.pageMargin"
+            min="5"
+            max="40"
+            step="1"
+            @input="
+              (e) =>
+                setPdfOption(
+                  'pageMargin',
+                  Number((e.target as HTMLInputElement).value)
+                )
+            "
+          />
+          <span class="value">{{ pdfStyle.pageMargin }}mm</span>
+        </div>
+
+        <div class="section-actions">
+          <button class="btn" @click="resetPdfStyle">
+            {{ t("pdfStyle.reset") }}
+          </button>
+        </div>
+      </div>
+
+      <div class="footer">
+        <button class="btn primary" @click="emit('close')">
+          {{ t("settings.done") }}
+        </button>
       </div>
     </div>
     <ShortcutsDialog :visible="showShortcuts" @close="showShortcuts = false" />
