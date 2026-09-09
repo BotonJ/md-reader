@@ -252,12 +252,25 @@ export async function renderMath(container: HTMLElement): Promise<void> {
   });
 }
 
+// Mermaid 的标签内容按 HTML 规则序列化（foreignObject 里的 <br> 不闭合、&nbsp; 实体），
+// 不是合法 XML，直接按 image/svg+xml 解析会失败；先归一化为 XML 兼容形式。
+function toXmlSafeSvg(svg: string): string {
+  return svg.replace(/<br\s*\/?>/gi, "<br/>").replace(/&nbsp;/gi, "&#160;");
+}
+
 function sanitizeMermaidSvg(svg: string): string {
-  const doc = new globalThis.DOMParser().parseFromString(svg, "image/svg+xml");
-  const root = doc.documentElement;
-  if (!root || root.nodeName === "parsererror") return "";
+  const parser = new globalThis.DOMParser();
+  const xml = parser.parseFromString(toXmlSafeSvg(svg), "image/svg+xml");
+  let root: Element | null = xml.documentElement;
+  // Chromium 解析失败时根元素是 <html> 包着 <parsererror>，必须全局查找而非只看根节点。
+  if (!root || xml.querySelector("parsererror")) {
+    // 仍失败则退回 HTML 解析（能容忍一切 HTML 写法），再经 XMLSerializer 产出良构 XML。
+    const html = parser.parseFromString(svg, "text/html");
+    root = html.querySelector("svg");
+    if (!root) return "";
+  }
   root.querySelectorAll("script").forEach((n) => n.remove());
-  const walker = doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+  const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   const toStrip: { el: Element; name: string }[] = [];
   let current: Node | null = root;
   while (current) {

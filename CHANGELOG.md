@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### 修复
+- 修复部分 Mermaid 图（节点/边标签含 `<br/>` 换行）渲染失败，页面上直接显示 "This page contains the following errors: Opening and ending tag mismatch: br and p" 错误文本的问题：新版 Mermaid 在 HTML 标签模式下输出的 SVG 不是合法 XML，XML 解析失败后整个浏览器错误文档被注入页面。现在解析前先归一化 `<br>`/`&nbsp;`，解析失败时正确检测 `<parsererror>` 并回退到 HTML 解析，错误文档不再进入页面。
+
 ## [0.3.6] - 2026-08-05
 
 ### 新增
