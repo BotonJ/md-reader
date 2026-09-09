@@ -6,6 +6,7 @@ defineProps<{
   nodes: TreeNode[];
   currentPath: string;
   depth?: number;
+  expandAll?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -29,15 +30,16 @@ function toggle(key: string) {
           @click="toggle(node.path)"
         >
           <span class="caret">
-            {{ collapsed[node.path] ? "▶" : "▼" }}
+            {{ collapsed[node.path] && !expandAll ? "▶" : "▼" }}
           </span>
           <span class="name">{{ node.name }}</span>
         </div>
         <FileTree
-          v-if="!collapsed[node.path] && node.children"
+          v-if="(!collapsed[node.path] || expandAll) && node.children"
           :nodes="node.children"
           :current-path="currentPath"
           :depth="(depth || 0) + 1"
+          :expand-all="expandAll"
           @open="(p) => emit('open', p)"
         />
       </template>

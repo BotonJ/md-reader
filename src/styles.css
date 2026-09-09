@@ -66,7 +66,6 @@
   --toc-active-bg: var(--bg-active);
   --toc-active-line: var(--link);
   --toc-active-shadow: none;
-  --reader-bg: var(--reader-bg-light, var(--bg));
   color-scheme: light;
 }
 
@@ -138,7 +137,6 @@
   --toc-active-bg: #0d3d38;
   --toc-active-line: #4fd1c5;
   --toc-active-shadow: inset 2px 0 0 var(--toc-active-line);
-  --reader-bg: var(--reader-bg-dark, var(--bg));
   color-scheme: dark;
 }
 

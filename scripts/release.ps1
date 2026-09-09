@@ -79,11 +79,8 @@ Write-Host "  Done."
 # ── Step 4: Build MSI ──────────────────────────────────────────────────
 Write-Step 4 "Building MSI..."
 $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
-$ErrorActionPreference = "Continue"
-& ".\node_modules\.bin\tauri.cmd" build --bundles msi 2>&1 | ForEach-Object { Write-Host $_ }
-$buildExit = $LASTEXITCODE
-$ErrorActionPreference = "Stop"
-if ($buildExit -ne 0) { throw "Build failed." }
+& ".\node_modules\.bin\tauri.cmd" build --bundles msi 2>&1 | Write-Host
+if ($LASTEXITCODE -ne 0) { throw "Build failed." }
 if (-not (Test-Path $exePath)) { throw "exe not found: $exePath" }
 if (-not (Test-Path $msiPath)) { throw "MSI not found: $msiPath" }
 Write-Host "  Build OK."

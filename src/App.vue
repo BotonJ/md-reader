@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { readTextFile, writeTextFile, exists } from "@tauri-apps/plugin-fs";
+import { readTextFile, writeTextFile, exists, stat } from "@tauri-apps/plugin-fs";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { invoke } from "@tauri-apps/api/core";
@@ -46,14 +46,17 @@ function toggleLocale() {
 }
 
 const {
-  rootDir,
-  tree,
+  roots,
+  treeByRoot,
+  errorsByRoot,
   loading: treeLoading,
-  error: treeError,
+  filterText,
   refresh: refreshTree,
-  openFolder,
-  restoreRoot,
-  clearRoot,
+  addRoot,
+  removeRoot,
+  pickFolder: chooseFolder,
+  restoreRoots,
+  clearRoots,
 } = useFileTree();
 
 const watcher = useFileWatcher();
@@ -118,6 +121,16 @@ const showFileTree = ref<boolean>(
 const showToc = ref<boolean>(
   localStorage.getItem("md-reader-show-toc") !== "0"
 );
+const focusMode = ref(false);
+
+function enterFocus() {
+  find.close();
+  focusMode.value = true;
+}
+
+function exitFocus() {
+  focusMode.value = false;
+}
 const showSettings = ref(false);
 const leftMode = ref<"files" | "search" | "outline">("files");
 const tocOnLeft = computed(() => readingSettings.value.tocPosition === "left");
@@ -171,27 +184,6 @@ async function openInExplorer(path: string) {
     await revealItemInDir(path);
   } catch (e: any) {
     errorMsg.value = e?.message ?? String(e);
-  }
-}
-
-async function copyPath(path: string) {
-  if (!path) return;
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(path);
-    } else {
-      const ta = document.createElement("textarea");
-      ta.value = path;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-    }
-    exportToast.value = t("tabs.copiedPath");
-  } catch {
-    exportToast.value = t("tabs.copyFailed");
   }
 }
 const dialogFileName = computed(() =>
@@ -305,16 +297,12 @@ function switchToTab(id: string) {
   activateTab(id);
 }
 
-function findNextTab(): string {
-  const idx = tabs.value.findIndex((t) => t.id === activeTabId.value);
-  if (idx < 0 || tabs.value.length === 0) return "";
-  return tabs.value[(idx + 1) % tabs.value.length].id;
-}
-
-function findPrevTab(): string {
-  const idx = tabs.value.findIndex((t) => t.id === activeTabId.value);
-  if (idx < 0 || tabs.value.length === 0) return "";
-  return tabs.value[(idx - 1 + tabs.value.length) % tabs.value.length].id;
+function cycleTab(dir: 1 | -1) {
+  if (tabs.value.length < 2) return;
+  const idx = tabs.value.findIndex((tb) => tb.id === activeTabId.value);
+  if (idx < 0) return;
+  const next = (idx + dir + tabs.value.length) % tabs.value.length;
+  switchToTab(tabs.value[next].id);
 }
 
 async function handleRefresh() {
@@ -431,48 +419,6 @@ function onDialogDiscard() {
 }
 function onDialogCancel() {
   resolveDialog("cancel");
-}
-
-async function closeOthers(id: string) {
-  const keep = tabs.value.find((x) => x.id === id);
-  if (!keep || tabs.value.length <= 1) return;
-  const others = tabs.value.filter((x) => x.id !== id);
-  for (const tab of others) {
-    if (tab.isDirty) {
-      if (tab.id !== activeTabId.value) switchToTab(tab.id);
-      const choice = await askUnsaved(tab, "unsaved");
-      if (choice === "cancel") return;
-      if (choice === "save") {
-        const ok = await saveTab(tab);
-        if (!ok) return;
-      }
-    }
-  }
-  for (const tab of others) removeTab(tab.id);
-  activateTab(keep.id);
-}
-
-async function closeAll() {
-  const ok = await confirmCloseAll();
-  if (!ok) return;
-  for (const tab of [...tabs.value]) removeTab(tab.id);
-}
-
-async function refreshTab(id: string) {
-  const tab = tabs.value.find((x) => x.id === id);
-  if (!tab) return;
-  if (tab.isDirty) {
-    if (id !== activeTabId.value) switchToTab(id);
-    const choice = await askUnsaved(tab, "external");
-    if (choice === "cancel") return;
-    if (choice === "save") {
-      // "重新加载" — discard unsaved edits and reload from disk.
-      await forceReloadTab(tab);
-    }
-    // "保留编辑" — keep current edits, do not reload.
-    return;
-  }
-  await forceReloadTab(tab);
 }
 
 function getPreviewTopSourceLine(): number {
@@ -626,17 +572,35 @@ async function pickFile() {
 }
 
 async function pickFolder() {
-  const dir = await openFolder();
-  if (dir) await startWatching(dir);
+  const dir = await chooseFolder();
+  if (dir) {
+    await startWatching(dir);
+    showFileTree.value = true;
+    leftMode.value = "files";
+  }
 }
 
 async function startWatching(dir: string) {
-  await watcher.start(dir, async (paths) => {
-    await refreshTree();
-    window.setTimeout(() => {
-      void onFilesChanged(paths);
-    }, 150);
-  });
+  try {
+    await watcher.add(dir, async (paths) => {
+      await refreshTree();
+      window.setTimeout(() => {
+        void onFilesChanged(paths);
+      }, 150);
+    });
+  } catch (e: any) {
+    errorMsg.value = String(e?.message ?? e);
+  }
+}
+
+async function closeRoot(dir: string) {
+  await watcher.remove(dir);
+  removeRoot(dir);
+}
+
+function closeAllFolders() {
+  void watcher.stop();
+  clearRoots();
 }
 
 async function onFilesChanged(paths: string[]) {
@@ -657,10 +621,35 @@ async function onFilesChanged(paths: string[]) {
   }
 }
 
-function closeFolder() {
-  void watcher.stop();
-  clearRoot();
+const collapsedRoots = ref<Record<string, boolean>>({});
+
+function toggleRoot(path: string) {
+  collapsedRoots.value[path] = !collapsedRoots.value[path];
 }
+
+const rootSections = computed(() =>
+  roots.value.map((r) => ({
+    path: r,
+    name: basename(r) || r,
+    tree: treeByRoot.value[r] ?? [],
+    error: errorsByRoot.value[r] ?? "",
+    filteredEmpty:
+      !!filterText.value.trim() && (treeByRoot.value[r] ?? []).length === 0,
+  }))
+);
+
+// Root that owns the current file (for resolving relative links/images),
+// falling back to the first open root.
+const currentRootDir = computed(() => {
+  const file = currentFile.value.replace(/\\/g, "/");
+  if (file) {
+    const hit = roots.value.find(
+      (r) => file === r || file.startsWith(r.replace(/\\/g, "/") + "/")
+    );
+    if (hit) return hit;
+  }
+  return roots.value[0] ?? "";
+});
 
 async function getInitialOpenFile(): Promise<string> {
   try {
@@ -880,6 +869,7 @@ function onKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") {
     if (find.visible.value) find.close();
     else if (showSettings.value) showSettings.value = false;
+    else if (focusMode.value) exitFocus();
     return;
   }
 
@@ -890,12 +880,24 @@ function onKeydown(e: KeyboardEvent) {
   if (combo === getBinding("toggle-mode")) {
     e.preventDefault();
     toggleEditorMode();
+  } else if (combo === getBinding("toggle-focus")) {
+    e.preventDefault();
+    focusMode.value ? exitFocus() : enterFocus();
   } else if (combo === getBinding("new-file")) {
     e.preventDefault();
     void createNewFile();
   } else if (combo === getBinding("open-file")) {
     e.preventDefault();
     void pickFile();
+  } else if (combo === getBinding("close-tab")) {
+    e.preventDefault();
+    if (activeTabId.value) void closeTab(activeTabId.value);
+  } else if (combo === getBinding("next-tab")) {
+    e.preventDefault();
+    cycleTab(1);
+  } else if (combo === getBinding("prev-tab")) {
+    e.preventDefault();
+    cycleTab(-1);
   } else if (combo === getBinding("search-panel")) {
     e.preventDefault();
     leftMode.value = "search";
@@ -921,21 +923,6 @@ function onKeydown(e: KeyboardEvent) {
   } else if (combo === getBinding("zoom-reset")) {
     e.preventDefault();
     resetFont();
-  } else if (combo === getBinding("close-tab")) {
-    e.preventDefault();
-    if (activeTabId.value) void closeTab(activeTabId.value);
-  } else if (
-    combo === getBinding("next-tab") ||
-    combo === getBinding("next-tab-right")
-  ) {
-    e.preventDefault();
-    if (tabs.value.length > 1) switchToTab(findNextTab());
-  } else if (
-    combo === getBinding("prev-tab") ||
-    combo === getBinding("prev-tab-left")
-  ) {
-    e.preventDefault();
-    if (tabs.value.length > 1) switchToTab(findPrevTab());
   } else if (isEdit && combo === getBinding("find")) {
     e.preventDefault();
     editorRef.value?.openSearch();
@@ -983,14 +970,15 @@ watch(activeTabId, () => {
 
 let unlistenDrop: (() => void) | null = null;
 let unlistenOpen: (() => void) | null = null;
+let unlistenCloseTab: (() => void) | null = null;
 let unlistenClose: (() => void) | null = null;
 
 onMounted(async () => {
   applyReadingSettings();
   void checkPandoc().then((info) => (pandocInfo.value = info));
   void checkPdfEngine().then((p) => (pdfEnginePath.value = p));
-  await restoreRoot();
-  if (rootDir.value) await startWatching(rootDir.value);
+  await restoreRoots();
+  for (const dir of roots.value) await startWatching(dir);
 
   // Listen for file-open events fired by Rust (file association / single-instance).
   try {
@@ -1001,8 +989,19 @@ onMounted(async () => {
         await loadFile(path);
       }
     });
-  } catch (e) {
+  } catch (e: any) {
     console.warn("listen open-file unavailable", e);
+  }
+
+  // macOS menu bar: "关闭标签" item sends this event (Cmd+W closes the
+  // active tab instead of the window).
+  try {
+    const { listen } = await import("@tauri-apps/api/event");
+    unlistenCloseTab = await listen("md-reader://close-tab", () => {
+      if (activeTabId.value) void closeTab(activeTabId.value);
+    });
+  } catch (e: any) {
+    console.warn("listen close-tab unavailable", e);
   }
 
   try {
@@ -1030,7 +1029,23 @@ onMounted(async () => {
         const paths = event.payload.paths;
         if (paths && paths.length > 0) {
           const target = paths.find((p) => /\.(md|markdown|mdx|txt)$/i.test(p));
-          if (target) await loadFile(target);
+          if (target) {
+            await loadFile(target);
+            return;
+          }
+          // No markdown file dropped: if it is a folder, open it as a root.
+          for (const p of paths.slice(0, 5)) {
+            try {
+              const info = await stat(p);
+              if (info.isDirectory) {
+                await startWatching(p);
+                await addRoot(p);
+                break;
+              }
+            } catch {
+              /* not statable, skip */
+            }
+          }
         }
       }
     });
@@ -1040,11 +1055,21 @@ onMounted(async () => {
   window.addEventListener("keydown", onKeydown);
   window.addEventListener("wheel", onWheel, { passive: false });
   void refreshRecent();
+
+  // Always reveal the window once the UI is ready. The window is created
+  // hidden (tauri.conf.json visible:false) and normally shown by the
+  // window-state plugin, but a corrupted saved state (visible:false, e.g.
+  // after a forced kill during launch) would otherwise keep it invisible.
+  if (appWindow) {
+    await appWindow.show();
+    await appWindow.setFocus();
+  }
 });
 
 onUnmounted(() => {
   unlistenDrop?.();
   unlistenOpen?.();
+  unlistenCloseTab?.();
   unlistenClose?.();
   if (headingTimer) clearTimeout(headingTimer);
   void watcher.stop();
@@ -1089,7 +1114,7 @@ watch(
 
 <template>
   <div class="app">
-    <header class="toolbar">
+    <header v-if="!focusMode" class="toolbar">
       <button
         class="btn"
         @click="createNewFile"
@@ -1108,7 +1133,7 @@ watch(
         {{ t("app.folder") }}
       </button>
       <button
-        v-if="rootDir"
+        v-if="roots.length"
         class="btn"
         @click="handleRefresh"
         :disabled="treeLoading"
@@ -1117,10 +1142,10 @@ watch(
         ↻
       </button>
       <button
-        v-if="rootDir"
+        v-if="roots.length"
         class="btn"
-        @click="closeFolder"
-        :title="t('app.closeFolder')"
+        @click="closeAllFolders"
+        :title="t('app.closeAllFolders')"
       >
         ✕
       </button>
@@ -1339,6 +1364,13 @@ watch(
         </svg>
       </button>
       <button
+        class="btn icon"
+        @click="enterFocus"
+        :title="t('shortcuts.focusMode') + shortcutSuffix('toggle-focus')"
+      >
+        ⛶
+      </button>
+      <button
         class="btn"
         @click="showFileTree = !showFileTree"
         :title="t('app.toggleSidebar')"
@@ -1396,21 +1428,17 @@ watch(
     </header>
 
     <TabBar
-      v-if="tabs.length"
+      v-if="tabs.length && !focusMode"
       :tabs="tabs"
       :active-tab-id="activeTabId"
       @activate="switchToTab"
       @close="closeTab"
-      @close-others="closeOthers"
-      @close-all="closeAll"
-      @refresh="refreshTab"
       @reveal-file="openInExplorer"
-      @copy-path="copyPath"
     />
 
     <main class="layout">
       <aside
-        v-if="showFileTree"
+        v-if="showFileTree && !focusMode"
         class="left"
         :style="{ width: leftWidth + 'px' }"
       >
@@ -1441,24 +1469,81 @@ watch(
         </div>
         <div v-if="leftMode === 'files'" class="panel-body">
           <div class="panel-header">
-            <span>{{ rootDir ? t("app.files") : t("app.noFolder") }}</span>
-            <span v-if="treeLoading" class="muted">…</span>
+            <span>{{ roots.length ? t("app.files") : t("app.noFolder") }}</span>
+            <span class="panel-header-actions">
+              <span v-if="treeLoading" class="muted">…</span>
+              <button
+                class="mini-btn"
+                @click="pickFolder"
+                :title="t('app.addFolder')"
+              >
+                ＋
+              </button>
+            </span>
           </div>
-          <div v-if="treeError" class="panel-error">{{ treeError }}</div>
-          <div class="tree-scroll">
-            <FileTree
-              v-if="rootDir"
-              :nodes="tree"
-              :current-path="currentFile"
-              @open="loadFile"
+          <div v-if="roots.length" class="tree-filter">
+            <input
+              v-model="filterText"
+              type="text"
+              class="filter-input"
+              :placeholder="t('app.filterFiles')"
+              @keydown.esc.stop="filterText = ''"
             />
-            <div v-else class="empty-tip">{{ t("app.openFolderHint") }}</div>
+            <button
+              v-if="filterText"
+              class="filter-clear"
+              :title="t('app.clearFilter')"
+              @click="filterText = ''"
+            >
+              ✕
+            </button>
+          </div>
+          <div class="tree-scroll">
+            <div v-if="!roots.length" class="empty-tip">
+              {{ t("app.openFolderHint") }}
+            </div>
+            <div
+              v-for="sec in rootSections"
+              :key="sec.path"
+              class="root-section"
+            >
+              <div
+                class="root-header"
+                :title="sec.path"
+                @click="toggleRoot(sec.path)"
+              >
+                <span class="caret">
+                  {{ collapsedRoots[sec.path] ? "▶" : "▼" }}
+                </span>
+                <span class="root-name">📁 {{ sec.name }}</span>
+                <button
+                  class="root-close"
+                  :title="t('app.closeFolder')"
+                  @click.stop="closeRoot(sec.path)"
+                >
+                  ✕
+                </button>
+              </div>
+              <div v-if="sec.error" class="root-error" :title="sec.error">
+                {{ sec.error }}
+              </div>
+              <div v-if="sec.filteredEmpty" class="root-empty">
+                {{ t("app.noMatch") }}
+              </div>
+              <FileTree
+                v-if="!collapsedRoots[sec.path]"
+                :nodes="sec.tree"
+                :current-path="currentFile"
+                :expand-all="!!filterText.trim()"
+                @open="loadFile"
+              />
+            </div>
           </div>
         </div>
         <div v-else-if="leftMode === 'search'" class="panel-body">
           <SearchPanel
             :visible="true"
-            :root-dir="rootDir"
+            :roots="roots"
             @close="leftMode = 'files'"
             @open="onSearchOpen"
           />
@@ -1468,7 +1553,11 @@ watch(
         </div>
       </aside>
 
-      <div v-if="showFileTree" class="resizer" @pointerdown="resizeLeft"></div>
+      <div
+        v-if="showFileTree && !focusMode"
+        class="resizer"
+        @pointerdown="resizeLeft"
+      ></div>
 
       <section
         ref="viewerEl"
@@ -1479,6 +1568,14 @@ watch(
         <div v-if="errorMsg" class="error" @click="errorMsg = ''">
           {{ errorMsg }}
         </div>
+        <button
+          v-if="focusMode"
+          class="focus-exit"
+          :title="t('app.exitFocus')"
+          @click="exitFocus"
+        >
+          ⤢ {{ t("app.exitFocus") }}
+        </button>
         <div v-if="!hasActiveFile" class="empty">
           <div class="empty-title">{{ t("app.emptyTitle") }}</div>
           <div class="empty-hint">{{ t("app.emptyHint") }}</div>
@@ -1522,7 +1619,7 @@ watch(
           ref="markdownRef"
           :source="draftContent"
           :current-file="currentFile"
-          :root-dir="rootDir"
+          :root-dir="currentRootDir"
           :render-tick="renderTick"
           @rendered="onRendered"
           @internal-link="onInternalLink"
@@ -1530,13 +1627,13 @@ watch(
       </section>
 
       <div
-        v-if="showToc && !tocOnLeft"
+        v-if="showToc && !tocOnLeft && !focusMode"
         class="resizer"
         @pointerdown="resizeRight"
       ></div>
 
       <aside
-        v-if="showToc && !tocOnLeft"
+        v-if="showToc && !tocOnLeft && !focusMode"
         class="right"
         :style="{ width: rightWidth + 'px' }"
       >
@@ -1678,9 +1775,128 @@ watch(
   color: #c00;
   background: rgba(255, 0, 0, 0.06);
 }
+.panel-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mini-btn {
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-btn);
+  color: var(--fg);
+  cursor: pointer;
+}
+.mini-btn:hover {
+  background: var(--bg-btn-hover);
+}
+.root-section {
+  border-bottom: 1px solid var(--shell-panel-header-border);
+}
+.root-section:last-child {
+  border-bottom: none;
+}
+.root-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--shell-sidebar-bg);
+  font-size: 12px;
+  color: var(--tree-dir-color);
+}
+.root-header:hover {
+  background: var(--tree-row-hover-bg);
+}
+.root-header .caret {
+  font-size: 10px;
+  color: var(--tree-caret-color);
+  width: 12px;
+  display: inline-block;
+}
+.root-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.root-close {
+  flex: 0 0 auto;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.root-close:hover {
+  background: var(--bg-btn-hover);
+  color: #c33;
+}
+.root-error {
+  padding: 6px 12px;
+  font-size: 11px;
+  color: #c00;
+  background: rgba(255, 0, 0, 0.06);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .tree-scroll {
   flex: 1 1 auto;
   overflow: auto;
+}
+.tree-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--shell-panel-header-border);
+}
+.filter-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 3px 8px;
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  outline: none;
+}
+.filter-input:focus {
+  border-color: var(--link);
+}
+.filter-clear {
+  flex: 0 0 auto;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.filter-clear:hover {
+  background: var(--bg-btn-hover);
+  color: var(--fg);
+}
+.root-empty {
+  padding: 8px 12px 10px;
+  font-size: 12px;
+  color: var(--fg-muted);
 }
 .empty-tip {
   padding: 16px 12px;
@@ -1705,13 +1921,12 @@ watch(
 .viewer {
   flex: 1 1 auto;
   overflow: auto;
-  background: var(--reader-bg, var(--bg));
+  background: var(--bg);
   min-width: 0;
   position: relative;
 }
 .viewer.editing {
   overflow: hidden;
-  background: var(--bg);
 }
 .empty {
   height: 100%;
@@ -1901,5 +2116,25 @@ watch(
   border-bottom: 1px solid #fcc;
   cursor: pointer;
   font-size: 13px;
+}
+.focus-exit {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 10;
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-btn);
+  color: var(--fg-muted);
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+.focus-exit:hover {
+  opacity: 1;
+  color: var(--fg);
+  background: var(--bg-btn-hover);
 }
 </style>

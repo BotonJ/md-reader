@@ -7,7 +7,7 @@ const { t } = useI18n();
 
 const props = defineProps<{
   visible: boolean;
-  rootDir: string;
+  roots: string[];
 }>();
 
 const emit = defineEmits<{
@@ -18,21 +18,21 @@ const emit = defineEmits<{
 const query = ref("");
 const caseSensitive = ref(false);
 const loading = ref(false);
-const results = ref<SearchMatch[]>([]);
+const results = ref<(SearchMatch & { group: string })[]>([]);
 const error = ref("");
 const inputRef = ref<HTMLInputElement | null>(null);
 
 const grouped = computed(() => {
-  const map: Record<string, SearchMatch[]> = {};
+  const map: Record<string, (SearchMatch & { group: string })[]> = {};
   for (const m of results.value) {
-    (map[m.rel_path] ||= []).push(m);
+    (map[m.group] ||= []).push(m);
   }
   return Object.entries(map).map(([rel, matches]) => ({ rel, matches }));
 });
 
 async function run() {
   error.value = "";
-  if (!props.rootDir) {
+  if (!props.roots.length) {
     error.value = t("search.openFolderFirst");
     results.value = [];
     return;
@@ -44,11 +44,21 @@ async function run() {
   }
   loading.value = true;
   try {
-    results.value = await searchInFiles(
-      props.rootDir,
-      q,
-      caseSensitive.value,
-      500
+    const searches = await Promise.all(
+      props.roots.map((root) =>
+        searchInFiles(root, q, caseSensitive.value, 500).then(
+          (matches) => ({ root, matches })
+        )
+      )
+    );
+    const rootNames = new Map(
+      props.roots.map((r) => [r, r.split(/[\\/]/).pop() || r])
+    );
+    results.value = searches.flatMap(({ root, matches }) =>
+      matches.map((m) => ({
+        ...m,
+        group: `${rootNames.get(root) ?? root}/${m.rel_path}`,
+      }))
     );
   } catch (e: any) {
     error.value = String(e?.message ?? e);

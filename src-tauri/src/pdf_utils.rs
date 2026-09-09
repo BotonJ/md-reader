@@ -68,9 +68,7 @@ pub fn find_edge_executable(custom: Option<&str>) -> Option<PathBuf> {
             "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
         ));
         if let Ok(local) = std::env::var("LOCALAPPDATA") {
-            candidates.push(
-                PathBuf::from(local).join("Microsoft\\Edge\\Application\\msedge.exe"),
-            );
+            candidates.push(PathBuf::from(local).join("Microsoft\\Edge\\Application\\msedge.exe"));
         }
         candidates.push(PathBuf::from(
             "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
@@ -111,8 +109,7 @@ pub fn find_edge_executable(custom: Option<&str>) -> Option<PathBuf> {
 
 #[tauri::command]
 pub fn check_pdf_engine(custom_edge: Option<String>) -> Option<String> {
-    find_edge_executable(custom_edge.as_deref())
-        .map(|p| p.to_string_lossy().to_string())
+    find_edge_executable(custom_edge.as_deref()).map(|p| p.to_string_lossy().to_string())
 }
 
 #[cfg(test)]
@@ -130,9 +127,7 @@ mod tests {
     #[test]
     fn strips_extended_unc_prefix() {
         assert_eq!(
-            strip_windows_extended_prefix(
-                r"\\?\UNC\192.168.1.224\工作共享\a.md".to_string(),
-            ),
+            strip_windows_extended_prefix(r"\\?\UNC\192.168.1.224\工作共享\a.md".to_string(),),
             r"\\192.168.1.224\工作共享\a.md"
         );
     }

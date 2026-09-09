@@ -1,54 +1,26 @@
-# Dependencies
-node_modules
-.pnpm-store
-
-# Build output
-dist
-dist-ssr
-src-tauri/target
-src-tauri/gen/schemas
-
-# IDE / Editor
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS
+# 忽略 macOS 拷贝过来的 AppleDouble 垃圾文件
+._*
 .DS_Store
-Thumbs.db
-desktop.ini
 
-# Logs
+# 前端
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# 日志
 *.log
 npm-debug.log*
 pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Env
-.env
-.env.local
-.env.*.local
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea/
 
-# Temp
-*.tmp
-*.swp
-*.bak
-
-# Local agent instructions
-AGENTS.md
-.claude/
-
-# Kilo local tooling
-.kilo/
-
-# Local docs / drafts
-docs/
-
-# pnpm
-pnpm-lock.yaml.bak
+# WorkBuddy 本地工作区（记忆/笔记，不入库）
+.workbuddy/

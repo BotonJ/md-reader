@@ -53,7 +53,37 @@ fn extract_md_path_from_args(argv: &[String]) -> Option<String> {
 }
 
 use tauri::{Emitter, State};
-use walkdir::WalkDir;
+
+fn is_markdown_file(path: &Path) -> bool {
+    matches!(
+        path.extension()
+            .and_then(|s| s.to_str())
+            .map(|s| s.to_ascii_lowercase())
+            .as_deref(),
+        Some("md") | Some("markdown") | Some("mdx") | Some("txt")
+    )
+}
+
+// Directory walker that honours .gitignore / .ignore rules (ripgrep's
+// `ignore` crate) and skips hidden entries. Callers add their own
+// filter_entry predicate (e.g. skipping node_modules/target).
+fn md_walker(root_path: &Path) -> ignore::WalkBuilder {
+    let mut builder = ignore::WalkBuilder::new(root_path);
+    builder
+        .hidden(true)
+        .git_ignore(true)
+        .git_exclude(true)
+        .ignore(true)
+        .parents(true)
+        .require_git(false)
+        .follow_links(false);
+    builder
+}
+
+fn skip_heavy_dirs(e: &ignore::DirEntry) -> bool {
+    let name = e.file_name().to_string_lossy();
+    !(name == "node_modules" || name == "target")
+}
 
 #[derive(Debug, Serialize, Clone)]
 pub struct MdFile {
@@ -66,18 +96,12 @@ pub struct MdFile {
 
 #[derive(Default)]
 pub struct WatcherState {
-    inner: Mutex<Option<Debouncer<notify_debouncer_mini::notify::RecommendedWatcher>>>,
-    current_root: Mutex<Option<PathBuf>>,
-}
-
-fn is_markdown_file(path: &Path) -> bool {
-    matches!(
-        path.extension()
-            .and_then(|s| s.to_str())
-            .map(|s| s.to_ascii_lowercase())
-            .as_deref(),
-        Some("md") | Some("markdown") | Some("mdx") | Some("txt")
-    )
+    watchers: Mutex<
+        std::collections::HashMap<
+            PathBuf,
+            Debouncer<notify_debouncer_mini::notify::RecommendedWatcher>,
+        >,
+    >,
 }
 
 #[tauri::command]
@@ -87,44 +111,41 @@ fn list_md_files(root: String) -> Result<Vec<MdFile>, String> {
         return Err(format!("Not a directory: {}", root));
     }
     let mut files = Vec::new();
-    for entry in WalkDir::new(&root_path)
-        .follow_links(false)
-        .into_iter()
-        .filter_entry(|e| {
-            let name = e.file_name().to_string_lossy();
-            !(name.starts_with('.') || name == "node_modules" || name == "target")
-        })
+    for entry in md_walker(&root_path)
+        .filter_entry(skip_heavy_dirs)
+        .build()
         .filter_map(|e| e.ok())
     {
         let path = entry.path();
-        if path.is_file() && is_markdown_file(path) {
-            let meta = match entry.metadata() {
-                Ok(m) => m,
-                Err(_) => continue,
-            };
-            let modified_ms = meta
-                .modified()
-                .ok()
-                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-                .map(|d| d.as_millis() as i64)
-                .unwrap_or(0);
-            let rel = path
-                .strip_prefix(&root_path)
-                .unwrap_or(path)
-                .to_string_lossy()
-                .to_string();
-            let name = path
-                .file_name()
-                .map(|s| s.to_string_lossy().to_string())
-                .unwrap_or_default();
-            files.push(MdFile {
-                path: path.to_string_lossy().to_string(),
-                name,
-                rel_path: rel,
-                size: meta.len(),
-                modified_ms,
-            });
+        if !path.is_file() || !is_markdown_file(path) {
+            continue;
         }
+        let meta = match entry.metadata() {
+            Ok(m) => m,
+            Err(_) => continue,
+        };
+        let modified_ms = meta
+            .modified()
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_millis() as i64)
+            .unwrap_or(0);
+        let rel = path
+            .strip_prefix(&root_path)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .to_string();
+        let name = path
+            .file_name()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_default();
+        files.push(MdFile {
+            path: path.to_string_lossy().to_string(),
+            name,
+            rel_path: rel,
+            size: meta.len(),
+            modified_ms,
+        });
     }
     files.sort_by(|a, b| a.rel_path.to_lowercase().cmp(&b.rel_path.to_lowercase()));
     Ok(files)
@@ -137,12 +158,12 @@ fn start_watch(
     root: String,
 ) -> Result<(), String> {
     let path = PathBuf::from(&root);
-    if !path.exists() {
-        return Err(format!("Path not found: {}", root));
+    if !path.is_dir() {
+        return Err(format!("Not a directory: {}", root));
     }
-    {
-        let mut guard = state.inner.lock().map_err(|e| e.to_string())?;
-        *guard = None;
+    let mut guard = state.watchers.lock().map_err(|e| e.to_string())?;
+    if guard.contains_key(&path) {
+        return Ok(());
     }
     let app_handle = app.clone();
     let mut debouncer = new_debouncer(
@@ -167,23 +188,22 @@ fn start_watch(
         .watch(&path, RecursiveMode::Recursive)
         .map_err(|e| e.to_string())?;
 
-    {
-        let mut guard = state.inner.lock().map_err(|e| e.to_string())?;
-        *guard = Some(debouncer);
-    }
-    {
-        let mut cur = state.current_root.lock().map_err(|e| e.to_string())?;
-        *cur = Some(path);
-    }
+    guard.insert(path, debouncer);
+    Ok(())
+}
+
+#[tauri::command]
+fn unwatch_root(state: State<'_, WatcherState>, root: String) -> Result<(), String> {
+    let mut guard = state.watchers.lock().map_err(|e| e.to_string())?;
+    // Dropping the per-root debouncer stops its watcher.
+    guard.remove(&PathBuf::from(&root));
     Ok(())
 }
 
 #[tauri::command]
 fn stop_watch(state: State<'_, WatcherState>) -> Result<(), String> {
-    let mut guard = state.inner.lock().map_err(|e| e.to_string())?;
-    *guard = None;
-    let mut cur = state.current_root.lock().map_err(|e| e.to_string())?;
-    *cur = None;
+    let mut guard = state.watchers.lock().map_err(|e| e.to_string())?;
+    guard.clear();
     Ok(())
 }
 
@@ -219,13 +239,9 @@ fn search_in_files(
     let limit = max_results.unwrap_or(500);
     let mut results = Vec::new();
 
-    'outer: for entry in WalkDir::new(&root_path)
-        .follow_links(false)
-        .into_iter()
-        .filter_entry(|e| {
-            let name = e.file_name().to_string_lossy();
-            !(name.starts_with('.') || name == "node_modules" || name == "target")
-        })
+    'outer: for entry in md_walker(&root_path)
+        .filter_entry(skip_heavy_dirs)
+        .build()
         .filter_map(|e| e.ok())
     {
         let path = entry.path();
@@ -441,9 +457,7 @@ fn set_theme_mode(window: tauri::WebviewWindow, theme_mode: String) -> Result<()
         "system" | _ => None, // 传入 None 可恢复对操作系统的监听
     };
 
-    window
-        .set_theme(theme_option)
-        .map_err(|e| e.to_string())?;
+    window.set_theme(theme_option).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -460,31 +474,79 @@ fn initial_open_file() -> Option<String> {
     extract_md_path_from_args(&argv)
 }
 
+// macOS menu bar. The default Tauri menu binds Cmd+W to "Close Window",
+// which quits the app when it is the only window. Replace it with a custom
+// menu where Cmd+W closes the active tab (event handled by the webview),
+// while keeping the standard Edit items so Cmd+C/V/Z still reach the webview.
+#[cfg(target_os = "macos")]
+fn setup_mac_menu(app: &tauri::AppHandle) -> tauri::Result<()> {
+    use tauri::menu::{MenuBuilder, MenuItem, SubmenuBuilder};
+
+    let close_tab = MenuItem::with_id(app, "close_tab", "关闭标签", true, Some("CmdOrCtrl+W"))?;
+
+    let app_menu = SubmenuBuilder::new(app, "MD Reader")
+        .about(None)
+        .separator()
+        .services()
+        .separator()
+        .hide()
+        .hide_others()
+        .show_all()
+        .separator()
+        .quit()
+        .build()?;
+
+    let file_menu = SubmenuBuilder::new(app, "文件")
+        .item(&close_tab)
+        .separator()
+        .close_window()
+        .build()?;
+
+    let edit_menu = SubmenuBuilder::new(app, "编辑")
+        .undo()
+        .redo()
+        .separator()
+        .cut()
+        .copy()
+        .paste()
+        .select_all()
+        .build()?;
+
+    let window_menu = SubmenuBuilder::new(app, "窗口")
+        .minimize()
+        .maximize()
+        .build()?;
+
+    let menu = MenuBuilder::new(app)
+        .item(&app_menu)
+        .item(&file_menu)
+        .item(&edit_menu)
+        .item(&window_menu)
+        .build()?;
+
+    app.set_menu(menu)?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            // Already-running instance: bring the window to the front (even when it is
-            // minimized) and emit the new file path so the frontend opens it in a tab.
+            // Already-running instance: focus window and emit the new file path.
             use tauri::Emitter;
             if let Some(window) = app.get_webview_window("main") {
-                // Restore from the minimized state first.
-                let _ = window.unminimize();
-                // Make sure it is actually visible.
                 let _ = window.show();
-                // Briefly raise to top-most and then drop it back, so Windows'
-                // foreground-lock cannot keep the window hidden behind others.
-                #[cfg(target_os = "windows")]
-                let _ = window.set_always_on_top(true);
-                // Move the window into the foreground.
                 let _ = window.set_focus();
-                #[cfg(target_os = "windows")]
-                let _ = window.set_always_on_top(false);
             }
             if let Some(path) = extract_md_path_from_args(&argv) {
                 let _ = app.emit("md-reader://open-file", path);
             }
         }))
+        .on_menu_event(|app, event| {
+            if event.id() == "close_tab" {
+                let _ = app.emit("md-reader://close-tab", ());
+            }
+        })
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
@@ -493,6 +555,9 @@ pub fn run() {
         .plugin(tauri_plugin_system_fonts::init())
         .setup(|app| {
             app.manage(WatcherState::default());
+
+            #[cfg(target_os = "macos")]
+            setup_mac_menu(app.handle())?;
 
             let window = app.get_webview_window("main").unwrap();
             let store = app.store(STORAGE_FILE)?;
@@ -511,6 +576,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             list_md_files,
             start_watch,
+            unwatch_root,
             stop_watch,
             search_in_files,
             initial_open_file,

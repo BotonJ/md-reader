@@ -9,8 +9,6 @@ export interface ReadingSettings {
   editorFontSize: number;
   editorFontFamily: string;
   tocPosition: "left" | "right";
-  readerBgLight: string | null;
-  readerBgDark: string | null;
 }
 
 const FONT_KEYS = ["system", "sans", "serif", "mono"] as const;
@@ -45,8 +43,6 @@ function defaults(): ReadingSettings {
     editorFontSize: 14,
     editorFontFamily: "mono",
     tocPosition: "right",
-    readerBgLight: null,
-    readerBgDark: null,
   };
 }
 
@@ -88,17 +84,6 @@ function apply() {
     "--editor-font-family",
     getEditorFontStack(settings.value.editorFontFamily)
   );
-  setReaderBgVar("--reader-bg-light", settings.value.readerBgLight);
-  setReaderBgVar("--reader-bg-dark", settings.value.readerBgDark);
-}
-
-function setReaderBgVar(name: string, value: string | null) {
-  const r = document.documentElement;
-  if (value && /^#[0-9a-fA-F]{6}$/.test(value)) {
-    r.style.setProperty(name, value);
-  } else {
-    r.style.removeProperty(name);
-  }
 }
 
 function setFontSize(v: number) {
@@ -136,28 +121,6 @@ function setTocPosition(v: "left" | "right") {
   save();
 }
 
-function setReaderBgLight(v: string | null) {
-  settings.value.readerBgLight = normalizeColor(v);
-  save();
-}
-
-function setReaderBgDark(v: string | null) {
-  settings.value.readerBgDark = normalizeColor(v);
-  save();
-}
-
-function normalizeColor(v: string | null): string | null {
-  if (!v) return null;
-  const m = /^#([0-9a-fA-F]{6})$/.exec(v.trim());
-  return m ? `#${m[1].toLowerCase()}` : null;
-}
-
-function resetReaderBg() {
-  settings.value.readerBgLight = null;
-  settings.value.readerBgDark = null;
-  save();
-}
-
 function reset() {
   settings.value = defaults();
   save();
@@ -182,9 +145,6 @@ export function useReadingSettings() {
     setEditorFontSize,
     setEditorFontFamily,
     setTocPosition,
-    setReaderBgLight,
-    setReaderBgDark,
-    resetReaderBg,
     reset,
   };
 }

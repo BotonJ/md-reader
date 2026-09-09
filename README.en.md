@@ -22,7 +22,6 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 - Open multiple Markdown files at once, switch via the horizontal tab bar under the toolbar
 - Click to switch, middle-click to close; reopening an already-open file focuses its tab instead of duplicating
 - Each tab independently keeps its content, unsaved draft, edit/preview mode, outline, and scroll position
-- Tab context menu: close / close others / close all, refresh, copy file path, reveal in folder
 - Restores the last open tabs and active tab on restart
 
 ### Reading
@@ -31,7 +30,7 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 - YAML Front Matter parsing & preview: top `---` metadata renders as an info card, body and outline strip the metadata
 - Syntax highlighting with highlight.js (30+ languages)
 - Math formulas with KaTeX (lazy-loaded)
-- 20+ Mermaid diagram types (flowchart, sequence, gantt, class, state, mindmap, pie and more; lazy-loaded, SVG sanitized via DOM parsing — strips scripts and event handlers only)
+- Diagrams / sequence / mindmap with Mermaid (lazy-loaded, SVG sanitized via DOM parsing — strips scripts and event handlers only)
 - Task lists, footnotes, emoji, heading anchors
 - Light / dark theme with persisted preference
 
@@ -59,14 +58,13 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 
 ### Export
 
-- **PDF**: Edge headless, 1-3 seconds, WYSIWYG, no LaTeX required; 24 preset templates plus font / color / spacing / page styling with live preview (see "PDF export styling" below)
+- **PDF**: Edge headless, 1-3 seconds, WYSIWYG, no LaTeX required
 - **HTML**: self-contained single file with images/CSS embedded
 - **DOCX**: powered by pandoc; optionally set a Word template `.docx` via `--reference-doc` to control fonts, headings and paragraph styles
 
 ### Desktop integration
 
 - Reading settings: font size, editor font size, line height, width, font family, outline position
-- Reader background color: customized separately for light / dark themes, with preset swatches and one-click reset
 - Customizable shortcuts: Settings -> View shortcuts, click a key cap to record a new combo; supports global and editor shortcuts, conflict detection, per-item and full reset
 - File watching with auto refresh
 - Recent files and per-file scroll position restore; empty state shows recent file list with click-to-open
@@ -92,11 +90,6 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 | `Ctrl+Shift+F`     | Full-text search                                                       |
 | `Ctrl+N`           | New Markdown file                                                      |
 | `Ctrl+O`           | Open file                                                              |
-| `Ctrl+W`           | Close current tab                                                       |
-| `Ctrl+Tab`         | Next tab                                                               |
-| `Ctrl+Shift+Tab`   | Previous tab                                                           |
-| `Ctrl+→`           | Next tab (right arrow)                                                 |
-| `Ctrl+←`           | Previous tab (left arrow)                                              |
 | `Ctrl+,`           | Reading settings                                                       |
 | `Ctrl+S`           | Save current file                                                      |
 | `Ctrl+Shift+S`     | Save as                                                                |
@@ -114,8 +107,6 @@ Small footprint (~6 MB), fast startup, multi-tab editing, source editing, KaTeX 
 ![image-20260701093258687](./screenshot/image-20260701093258687.png)
 
 ![image-20260701093345426](./screenshot/image-20260701093345426.png)
-
-![PDF export styling settings](./screenshot/pdf-export-settings-0.3.7.png)
 
 ## Installation
 
@@ -198,20 +189,6 @@ pnpm format
 - **Full-text search**: walkdir + line scanning
 - **File association / single instance**: tauri-plugin-single-instance
 - **i18n**: vue-i18n
-
-## PDF Export Styling
-
-Settings → "PDF export" tab (independent from reading settings), applied when exporting PDF / printing:
-
-- **24 preset templates**, grouped in the dropdown:
-  - Document: Modern (default) / Minimal / Academic / Eye-care / Business Blue / Classic Brown / GitHub
-  - Developer: Dark / Terminal Green / Dracula Purple / VS Code Blue / Nord / Solarized Light / Solarized Dark / Gruvbox Light / Gruvbox Dark / Monokai / Catppuccin / One Dark
-  - Creative: Sakura Pink / Lavender / Ocean Cyan / Sunset Orange / Forest Moss
-- **Density**: compact / standard / loose
-- **Fonts**: body / heading / code font family, body size, line height
-- **Colors**: text, headings, links, code background, page background and more
-- **Page**: A4 / Letter, portrait / landscape, margins
-- **Live preview**: editable sample text with instant updates, plus an optional light / dark side-by-side comparison
 
 ## How PDF Export Works
 

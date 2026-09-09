@@ -68,8 +68,7 @@ fn run_edge_print(
 ) -> Result<EdgeAttemptResult, PdfExportError> {
     let temp_pdf = tmp_dir.join(format!("md-reader-out-{}-{}.pdf", stamp, attempt));
     let user_data_dir = tmp_dir.join(format!("md-reader-edge-{}-{}", stamp, attempt));
-    std::fs::create_dir_all(&user_data_dir)
-        .map_err(|e| PdfExportError::IoError(e.to_string()))?;
+    std::fs::create_dir_all(&user_data_dir).map_err(|e| PdfExportError::IoError(e.to_string()))?;
 
     let mut cmd = Command::new(edge);
     cmd.arg("--headless=new");
@@ -88,6 +87,7 @@ fn run_edge_print(
     cmd.arg("--no-first-run");
     cmd.arg("--no-default-browser-check");
     cmd.arg("--no-pdf-header-footer");
+    cmd.arg("--no-margins");
     cmd.arg("--run-all-compositor-stages-before-draw");
     cmd.arg(format!(
         "--virtual-time-budget={}",
@@ -117,20 +117,15 @@ fn run_edge_print(
 }
 
 #[tauri::command]
-pub fn export_pdf_via_edge(
-    opts: PdfExportOptions,
-) -> Result<PdfExportResult, PdfExportError> {
+pub fn export_pdf_via_edge(opts: PdfExportOptions) -> Result<PdfExportResult, PdfExportError> {
     let edge = find_edge_executable(opts.edge_path.as_deref()).ok_or_else(|| {
-        PdfExportError::NoEdge(
-            "未找到 Microsoft Edge，请手动选择 msedge.exe 路径".into(),
-        )
+        PdfExportError::NoEdge("未找到 Microsoft Edge，请手动选择 msedge.exe 路径".into())
     })?;
 
     let tmp_dir = std::env::temp_dir();
     let stamp = current_millis();
     let tmp_html = tmp_dir.join(format!("md-reader-export-{}.html", stamp));
-    std::fs::write(&tmp_html, &opts.html)
-        .map_err(|e| PdfExportError::IoError(e.to_string()))?;
+    std::fs::write(&tmp_html, &opts.html).map_err(|e| PdfExportError::IoError(e.to_string()))?;
 
     let final_out = PathBuf::from(&opts.out_path);
     if let Some(parent) = final_out.parent() {
@@ -178,10 +173,7 @@ pub fn export_pdf_via_edge(
                         detail, size
                     ));
                 }
-                Err(_) => diagnostics.push(format!(
-                    "{}\n等待 10 秒后 PDF 文件仍未生成",
-                    detail
-                )),
+                Err(_) => diagnostics.push(format!("{}\n等待 10 秒后 PDF 文件仍未生成", detail)),
             }
         } else {
             diagnostics.push(detail);
